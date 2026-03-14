@@ -1,9 +1,15 @@
-"AJP":
-  url: https://aapt.scitation.org/journal/ajp
+"Neuron":
+  url: http://cell.com/neuron/
   color: "#00369f"
 
-"PhysRev":
-  url: https://journals.aps.org/
+"NatNeurosci":
+  url: https://www.nature.com/neuro/
 
-"Vision":
+"NatComms":
+  url: https://www.nature.com/comms/
+
+"Preprint":
   color: "#009f36"
+
+"InRevision":
+  color: "#509f36"
