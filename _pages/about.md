@@ -1,8 +1,11 @@
 ---
 layout: about
-title: about
-permalink: /
-subtitle: <a href='#'>Stanford Univeristy</a>. Postdoctoral Researcher.
+permalink: /about/
+title: About
+nav: true
+nav_order: 1
+
+subtitle: <a href='www.stanford.edu'>Stanford University</a>. Postdoctoral Researcher. I usually go by Sia.
 
 profile:
   align: right
@@ -13,18 +16,6 @@ profile:
     <p>299 Campus Dr</p>
     <p>Stanford, CA 94305</p>
 
-selected_papers: true # includes a list of papers marked as "selected={true}"
-social: true # includes social icons at the bottom of the page
-
-announcements:
-  enabled: false # includes a list of news items
-  scrollable: true # adds a vertical scroll bar if there are more than 3 news items
-  limit: 5 # leave blank to include all the news in the `_news` folder
-
-latest_posts:
-  enabled: false
-  scrollable: true # adds a vertical scroll bar if there are more than 3 new posts items
-  limit: 3 # leave blank to include all the blog posts
 ---
 
 **THIS PAGE IS UNDER CONSTRUCTION.**
