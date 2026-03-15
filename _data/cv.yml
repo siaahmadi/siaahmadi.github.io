@@ -27,7 +27,7 @@ cv:
         location: "La Jolla, CA"
         url: https://www.ucsd.edu/
         area: "Biology (Computational Neuroscience)"
-        studyType: PhD
+        studyType: Doctor of Philosophy
         start_date: 2013
         end_date: 2020
         score: ""
@@ -37,6 +37,7 @@ cv:
 
       - institution: University of Amsterdam
         location: Amsterdam,<br>Netherlands
+        url: https://www.uva.nl/
         area: Brain & Cognitive Sciences
         studyType: Master of Science
         start_date: 2011
@@ -44,6 +45,7 @@ cv:
 
       - institution: Sharif University of Technology
         location: Tehran, Iran
+        url: https://www.sharif.ir/
         area: Computer Science
         studyType: Bachelor of Science
         start_date: 2007
@@ -51,6 +53,7 @@ cv:
 
     Experience:
       - company: Department of Neurobiology, Stanford University
+        url: https://www.stanford.edu/
         position: Postdoctoral Scholar
         location: Stanford, CA
         start_date: 2021
@@ -60,6 +63,7 @@ cv:
           - Wrote three papers, with one currently in revision in the journal Cell (impact factor 42.5)
 
       - company: University of California, San Diego
+        url: https://www.ucsd.edu/
         position: PhD Student Researcher
         location: La Jolla, CA
         start_date: 2013
@@ -83,6 +87,22 @@ cv:
         date: "2023--2025"
         awarder: Stanford University Department of Neurobiology
         summary: $55,000 per year postdoctoral salary support
+
+    Awards:
+      - title: Anuradha Rao Memorial Travel Award
+        authors:
+          - "Cell Press"
+        date: "2023--2025"
+        awarder: Anuradha Rao Memorial Fund
+        summary: $1,000 travel grant to SfN meeting
+
+    Honors:
+      - title: Schmidt Science Fellows Program
+        authors:
+          - "Schmidt Science Fellowship"
+        date: "2019"
+        awarder: UC San Diego
+        summary: Selected as one of six PhD students to represent UCSD in the Schmidt Science Fellows Competition Finals
 
     Publications:
       - title: Distinct roles of dentate gyrus and medial entorhinal cortex inputs for phase precession and temporal correlations in the hippocampal CA3 area
