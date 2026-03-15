@@ -2,14 +2,23 @@
   url: http://cell.com/neuron/
   color: "#00369f"
 
-"NatNeurosci":
+"Nature Neuroscience":
   url: https://www.nature.com/neuro/
 
 "NatComms":
-  url: https://www.nature.com/comms/
+  url: https://www.nature.com/ncomms/
+
+"Nature Communications":
+  url: https://www.nature.com/ncomms/
 
 "Preprint":
   color: "#009f36"
 
-"InRevision":
+"In Revision":
   color: "#509f36"
+
+"Neuroscience":
+  color: "#34c9eb"
+
+"AI":
+  color: "#eb3456"
