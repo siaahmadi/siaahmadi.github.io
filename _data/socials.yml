@@ -5,7 +5,9 @@ cv_pdf: /assets/pdf/resume_sia_ahmadi.pdf # path to your CV PDF file
 email: "[my_first_name].a.[my_last_name]@gmail.com" # your email address
 # inspirehep_id: 1010907 # Inspire HEP author ID
 orcid_id: "0000-0002-1996-2969" # Inspire HEP author ID
-rss_icon: false # comment this line to hide the RSS icon
+# rss_icon: false # comment this line to hide the RSS icon
+linkedin_username: siavash-ahmadi
+github_username: siaahmadi
 scholar_userid: WDusSbUAAAAJ # your Google Scholar ID
 # wechat_qr: # filename of your wechat qr-code saved as an image (e.g., wechat-qr.png if saved to assets/img/wechat-qr.png)
 # whatsapp_number: # your WhatsApp number (full phone number in international format. Omit any zeroes, brackets, or dashes when adding the phone number in international format.)
