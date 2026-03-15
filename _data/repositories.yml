@@ -1,7 +1,7 @@
-github_users:
-  - siaahmadi
+# github_users:
+#   - siaahmadi
 
-repo_description_lines_max: 2
+# repo_description_lines_max: 2
 
 github_repos:
   - siaahmadi/from_scratch
