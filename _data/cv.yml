@@ -1,10 +1,10 @@
 cv:
-  name: Siavash Ahmadi
-  label: Postdoctoral Scholar
+  name: "Siavash Ahmadi"
+  label: "Postdoctoral Scholar"
   email: "[my_first_name].a.[my_last_name]@gmail.com"
-  location: Los Angeles, CA
+  location: "Los Angeles, CA"
   image: ""
-  summary: 15+ years of experience spanning **computational neuroscience**, **statistics**, and **deep learning** bridging AI and neuroscience.
+  summary: "15+ years of experience spanning **computational neuroscience**, **statistics**, and **deep learning** bridging AI and neuroscience."
 
   social_networks:
     - network: X
@@ -12,21 +12,21 @@ cv:
     - network: GitHub
       username: siaahmadi
     - network: LinkedIn
-      username: siavash-ahmadi
+      username: "siavash-ahmadi"
 
   address:
-    street: 299 Campus Dr
+    street: "299 Campus Dr"
     city: Stanford
     region: California
-    postalCode: CA 94305
+    postalCode: "94305"
     countryCode: US
 
   sections:
     Education:
-      - institution: University of California, San Diego
-        location: La Jolla, CA
+      - institution: "University of California, San Diego"
+        location: "La Jolla, CA"
         url: https://www.ucsd.edu/
-        area: Biology (Computational Neuroscience)
+        area: "Biology (Computational Neuroscience)"
         studyType: PhD
         start_date: 2013
         end_date: 2020
@@ -36,16 +36,16 @@ cv:
           - Was selected to represent UC San Diego at the international **Schmidt Science Fellows** competition (one of only 6 selected)
 
       - institution: University of Amsterdam
-        location: Amsterdam, Netherlands
+        location: Amsterdam,<br>Netherlands
         area: Brain & Cognitive Sciences
-        studyType: MSc
+        studyType: Master of Science
         start_date: 2011
         end_date: 2013
 
       - institution: Sharif University of Technology
         location: Tehran, Iran
         area: Computer Science
-        studyType: BSc
+        studyType: Bachelor of Science
         start_date: 2007
         end_date: 2011
 
@@ -55,7 +55,7 @@ cv:
         location: Stanford, CA
         start_date: 2021
         end_date: 2025
-        summary: Design and implemented large-scale data analysis pipelines to disocver algorithmic insights into the computational basis of social cognition in the primate cortex.
+        summary: Designed and implemented large-scale data analysis pipelines to disocver algorithmic insights into the computational basis of social cognition in the primate cortex.
         highlights:
           - Wrote three papers, with one currently in revision in the journal Cell (impact factor 42.5)
 
@@ -69,12 +69,12 @@ cv:
           - Published three papers in top neuroscience journals (Nature Communications, Neuron, Nature Neuroscience)
           - Published PhD dissertation, with one chapter currently under preparation for journal publication
       
-    Volunteer:
-      - company: Scientific publication venues
-        position: Ad hoc Reviewer, Area Chair
-        start_date: "2020--"
-        end_date: Present
-        summary: Reviewed papers in computational neuroscience, area chaired ICLR Tiny Papers
+    # Volunteer:
+    #   - company: "Scientific publication venues"
+    #     position: "Ad hoc Reviewer, Area Chair"
+    #     start_date: "2020--"
+    #     end_date: Present
+    #     summary: "Reviewed papers in computational neuroscience, area chaired ICLR Tiny Papers"
 
     Awards:
       - title: Barres Postdoctoral Fellowship (2x)
