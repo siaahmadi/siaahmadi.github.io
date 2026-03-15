@@ -46,7 +46,7 @@ ninja.data = [{
           },
         },{id: "nav-resumé",
           title: "Resumé",
-          description: "Please click on the link on the right to view a PDF version of my resumé which details my accomplishments per role.",
+          description: "Please click on the [link on the right](/assets/pdf/resume_sia_ahmadi.pdf) to view a PDF version of my resumé which details my accomplishments per role.",
           section: "Navigation",
           handler: () => {
             window.location.href = "/cv/";
@@ -507,11 +507,18 @@ ninja.data = [{
           window.open("https://orcid.org/0000-0002-1996-2969", "_blank");
         },
       },{
-        id: 'social-rss',
-        title: 'RSS Feed',
+        id: 'social-linkedin',
+        title: 'LinkedIn',
         section: 'Socials',
         handler: () => {
-          window.open("/feed.xml", "_blank");
+          window.open("https://www.linkedin.com/in/siavash-ahmadi", "_blank");
+        },
+      },{
+        id: 'social-github',
+        title: 'GitHub',
+        section: 'Socials',
+        handler: () => {
+          window.open("https://github.com/siaahmadi", "_blank");
         },
       },{
         id: 'social-scholar',
