@@ -5,7 +5,7 @@ title: About
 nav: true
 nav_order: 1
 
-subtitle: <a href='www.stanford.edu'>Stanford University</a>. Postdoctoral Researcher. I usually go by Sia.
+subtitle: <a href='www.stanford.edu'>Stanford University</a>. Postdoctoral Researcher. (I usually go by Sia.)
 
 profile:
   align: right

@@ -2,7 +2,7 @@
 layout: about
 title: Home
 permalink: /
-subtitle: <a href='www.stanford.edu'>Stanford University</a>. Postdoctoral Researcher. I usually go by Sia.
+subtitle: <a href='www.stanford.edu'>Stanford University</a>. Postdoctoral Researcher. (I usually go by Sia.)
 
 profile:
   align: right
@@ -27,7 +27,7 @@ latest_posts:
   limit: 3 # leave blank to include all the blog posts
 ---
 
-**THIS PAGE IS UNDER CONSTRUCTION.**
+**THIS SITE IS UNDER CONSTRUCTION.**
 
 I'm a computational neuroscientist broadly interested in neural computation and AI, and in particular, learning and planning. My aim is to understand artificial and biological neural networks through dissecting their analogous functions. I also deconstruct systems to find inefficiencies or shortcomings and propose solutions to address them.
 

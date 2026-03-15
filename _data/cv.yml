@@ -27,7 +27,7 @@ cv:
         location: "La Jolla, CA"
         url: https://www.ucsd.edu/
         area: "Biology (Computational Neuroscience)"
-        studyType: Doctor of Philosophy
+        studyType: Doctor of Philosophy (PhD)
         start_date: 2013
         end_date: 2020
         score: ""
@@ -69,7 +69,7 @@ cv:
         start_date: 2013
         end_date: 2020
         highlights:
-          - Built data pipelines for large-scale (> 500 GiB) multi-modal neural data (spiking + LFP)
+          - Built data pipelines for large-scale (> 500 GiB) multi-modal neural data (spiking + LFP + motion tracking)
           - Published three papers in top neuroscience journals (Nature Communications, Neuron, Nature Neuroscience)
           - Published PhD dissertation, with one chapter currently under preparation for journal publication
       
@@ -88,7 +88,6 @@ cv:
         awarder: Stanford University Department of Neurobiology
         summary: $55,000 per year postdoctoral salary support
 
-    Awards:
       - title: Anuradha Rao Memorial Travel Award
         authors:
           - "Cell Press"
