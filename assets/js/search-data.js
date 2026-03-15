@@ -44,9 +44,9 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/blog/";
           },
-        },{id: "nav-resume",
-          title: "Resume",
-          description: "Please click on the link on the right to view a PDF version of my resume which details my accomplishments per role.",
+        },{id: "nav-resumé",
+          title: "Resumé",
+          description: "Please click on the link on the right to view a PDF version of my resumé which details my accomplishments per role.",
           section: "Navigation",
           handler: () => {
             window.location.href = "/cv/";
