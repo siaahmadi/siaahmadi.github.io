@@ -33,4 +33,4 @@ I'm a computational neuroscientist broadly interested in neural computation and 
 
 Currently, I'm looking for a job in industry. I'm primiarily interested in AI Scientist, ML Engineer, or Data Scientist roles. Please visit my publications page. I'm also working on some projects to [understand](/publications/) and [improve](/publications/) AI systems, in particular large language models (LLMs). You can find my resumem [in PDF format](/assets/pdf/resume_sia_ahmadi.pdf) or a its [summary as an HTML](/cv).
 
-Please see my [about page](/about/) for more detailed information about my work, or view [my publications](/publications/). My [blog](/blog/) contains posts about some of my main and miscellaneous projects. Any open sourced code I wrote is also available from [the code page](/code) or [the repositories page](/repositories).
+Please see my [about page](/about/) for more detailed information about my work, or view [my publications](/publications/). My [blog](/blog/) contains posts about some of my main and miscellaneous projects. Any open sourced code I wrote is also available from [the code page](/repositories).

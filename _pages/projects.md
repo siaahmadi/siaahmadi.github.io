@@ -1,11 +1,11 @@
 ---
 layout: page
-title: projects
+title: Projects
 permalink: /projects/
-description: A growing collection of your cool projects.
+description: A set of ongoing or unpublished projects. May include smaller works that don't reach the level of scientific rigor to be published in a journal.
 nav: true
 nav_order: 4
-display_categories: [work, fun]
+display_categories: [side projects, hobbies, ai, neuroscience, finance, work, fun]
 horizontal: false
 ---
 
