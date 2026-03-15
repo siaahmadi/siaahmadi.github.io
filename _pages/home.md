@@ -29,7 +29,7 @@ latest_posts:
 
 **THIS PAGE IS UNDER CONSTRUCTION.**
 
-I'm a computational neuroscientist broadly interested in neural computation and AI. On the research side of things, I like to make analogies between brain function and artificial neural networks and use these analogies to understand how neural networks function. In particular, I'm interested in understanding learning and planning in neural systems (artificial and biological). I also dissect systems to find inefficiencies or shortcomings and try to make solutions to address them.
+I'm a computational neuroscientist broadly interested in neural computation and AI, and in particular, learning and planning. My aim is to understand artificial and biological neural networks through dissecting their analogous functions. I also deconstruct systems to find inefficiencies or shortcomings and propose solutions to address them.
 
 Currently, I'm looking for a job in industry. I'm primiarily interested in AI Scientist, ML Engineer, or Data Scientist roles. Please visit my publications page. I'm also working on some projects to [understand](/publications/) and [improve](/publications/) AI systems, in particular large language models (LLMs). You can find my resumé [in PDF format](/assets/pdf/resume_sia_ahmadi.pdf) or a its [summary as an HTML](/cv).
 
