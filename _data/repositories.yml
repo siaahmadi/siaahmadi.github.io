@@ -4,6 +4,7 @@
 # repo_description_lines_max: 2
 
 github_repos:
+  - siaahmadi/tiered_transformer
   - siaahmadi/from_scratch
   - cleibold/CA3phaseprecession
   - siaahmadi/utils
