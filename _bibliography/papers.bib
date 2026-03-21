@@ -154,15 +154,35 @@ article{PhysRev.47.777,
 @unpublished{ahmadi2026scaling,
   title             = "Strong Scaling of Autoregressive Inference",
   author            = "Ahmadi†, Siavash",
-  abstract          = "The impressive capabilities of modern large language models critically rely on generating responses autoregressively. Autoregressive token generation properly factorizes the joint probability distribution of the output which enables superior response quality. However, following the correct statistical distribution of tokens as such destines generation to be inherently sequential, bottlenecking scaling. Efforts to overcome this have largely fallen short because they fail to preserve the output's \emph{joint distribution}. Here, we factorize autoregressive generation into a latent graphical model to enable \emph{strong} inference scaling. Our scheme leads to a theoretical \emph{quadratic} speedup. We present preliminary empirical results that this amounts to a up to over 20x faster wall clock generation time for typical-length outputs on an entry level T4 GPU at the expense of potentially more costly training. Our method's significant gains could empower better reasoning models wherein a large number of chain-of-thought tokens must be generated fast. Furthermore, because of its strong scaling nature and that it preserves the autoregressive property, it can be combined with established methods designed to expedite AR generation to accelerate inference even more.",
+  abstract          = "The impressive capabilities of modern large language models critically rely on
+                        generating responses autoregressively. Autoregressive token generation properly
+                        factorizes the joint probability distribution of the output which enables superior
+                        response quality. However, following the correct statistical distribution of tokens
+                        as such destines generation to be inherently sequential, bottlenecking scaling.
+                        Efforts to overcome this have largely fallen short because they fail to preserve the
+                        output's joint distribution. Here, we factorize autoregressive (AR) generation
+                        into a latent variable graphical model to enable strong inference scaling. Our
+                        scheme reduces the number T of sequential forward passes required to generate a
+                        response with T tokens to only O(√T). In addition, it allows reducing response
+                        completion latency by increasing the number of parallel processors. We present
+                        preliminary empirical results showing generation wall clock time scales in
+                        accordance with the number of parallel processing streams. Compared to
+                        sequential generation, token throughput can be increased by up to over 70x on an
+                        entry level T4 GPU at the expense of more complexity and compute required at
+                        training. Our method's significant gains could empower better reasoning models
+                        wherein a large number of chain-of-thought tokens must be generated fast.
+                        Furthermore, because of its strong scaling nature and that it preserves AR
+                        factorization, it can be combined with established methods designed to expedite
+                        AR generation to accelerate inference even more.",
   journal           = "Preprint",
   publisher         = {Working paper},
   year              = {2026},
   dimensions        = {true},
+  pdf               = {Tiered_Transformer.pdf},
   html              = {http://arxiv.org/abs/11111},
-  code              = {https://github.com/siaahmadi/},
+  code              = {https://github.com/siaahmadi/tiered_transformer},
   additional_info   = {. * See associated [blog post here](https://siaahmadi.github.io/blog/2026/scaling/)},
-  annotation        = {* Independent project<br>† Unaffiliated<br>Project code at [https://github.com/siaahmadi/scaling_inference](https://github.com/siaahmadi/scaling_inference)},
+  annotation        = {* Independent project<br>† Unaffiliated<br>Project code at [https://github.com/siaahmadi/tiered_transformer](https://github.com/siaahmadi/tiered_transformer)},
   abbr              = {Preprint},
   selected          = {true},
 }
