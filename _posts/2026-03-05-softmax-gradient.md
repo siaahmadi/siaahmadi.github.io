@@ -107,9 +107,9 @@ $$
     \end{cases} = \delta_{ij}u(x_i) \label{eq:uprime} \\[3mm]
     \Dp{x_i}v(\Vector{x}) & = u(x_i) \label{eq:vprime}
 \end{align}
+$$
 
 where $\delta_{ij}=1$ when $i=j$ and 0 otherwise. Now,
-$$
 
 $$
 \begin{align*}
@@ -199,7 +199,7 @@ When we are computing the gradient of an upstream loss with respect to the softm
 
 $$
 \begin{align*}
-    G & = \nabla_\Vector{p}\mathcal{L}\in\mathbb{R}^{1\times n} \qquad\qquad \text{\# upstream gradient}\\[4mm]
+    G & = \nabla_\Vector{p}\mathcal{L}\in\mathbb{R}^{1\times n} \qquad\qquad \text{# upstream gradient}\\[4mm]
     \Dp[\mathcal{L}]{\Vector{x}} & = \Dp[\mathcal{L}]{\Vector{p}}\cdot\Dp[\Vector{p}]{\Vector{x}} \in \mathbb{R}^{1\times n}\\[2mm]
     & = G(\mathrm{diag}(\Vector{p})-\Vector{p}^\top\Vector{p})\\[2mm]
     & = \underbrace{G\cdot\mathrm{diag}(\Vector{p})}_{\text{matrix multiply}}-\underbrace{G\cdot\underbrace{\Vector{p}^\top\Vector{p}}_{\text{matrix}}}_{\text{matrix multiply}}\\[2mm]
@@ -208,13 +208,17 @@ $$
 \end{align*}
 $$
 
-<aside><p>
-$\Vector{p}_{1\times n}(p^\top)_{n\times1}=P_{n\times n}$ is a matrix. $G_{1\times n}$ itself is a vector, so $G\Vector{p}^\top\Vector{p}$ is a vector-matrix multiplication. However, by matrix multiplication commutativity, we can carry out $G\Vector{p}^\top$ first which is a dot product of two vectors, resulting in a scalar. Then we multiply this scalar by the vector $\Vector{p}$.
-
+<aside>
+<p>
+$(p^\top)_{n\times1}\Vector{p}_{1\times n}=P_{n\times n}$ is a matrix. $G_{1\times n}$ itself is a vector, so $G\Vector{p}^\top\Vector{p}$ is a vector-matrix multiplication. However, by matrix multiplication commutativity, we can carry out $G\Vector{p}^\top$ first which is a dot product of two vectors, resulting in a scalar. Then we multiply this scalar by the vector $\Vector{p}$.
+</p>
+<p>
 Likewise, since we're using $\mathrm{diag}(\cdot)$ to denote a diagonal matrix whose diagonal elements are given by the vector argument, $G\mathrm{diag}(\Vector{p})$ is also a vector-by-matrix multiplication. This is the same as elementwise multiplication of $G$ and $\Vector{p}$.
-
+</p>
+<p>
 Once we write the equations, we can factor out a $\Vector{p}$ from the write, which results in the final equation.
-</p> </aside>
+</p>
+</aside>
 
 So now the code becomes
 
