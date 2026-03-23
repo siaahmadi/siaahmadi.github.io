@@ -58,6 +58,13 @@ _styles: >
     font-size: 16px;
 ---
 
+$$
+\newcommand{\smx}[1]{\mathrm{softmax}(#1)}
+\newcommand{\Vector}[1]{\mathbf{#1}}
+\newcommand{\D}[1]{\frac{d}{d#1}}
+\newcommand{\Dp}[2][]{\frac{\partial#1}{\partial#2}}
+\newcommand{\smxv}[1]{\mathrm{softmax}(\Vector{#1})}
+$$
 
 # The softmax function
 
@@ -117,20 +124,6 @@ $$
 
 
 If we set $\Vector{p} = \smxv{x}$, a vectorized implementation of this could look like this:
-
-<d-code block language="python">
-def softmax_grad(x):
-    p = softmax(x, axis=-1)
-    grad = np.diag(p) - p.T @ p
-    return grad
-</d-code>
-
-{% highlight python %}
-def softmax_grad(x):
-    p = softmax(x, axis=-1)
-    grad = np.diag(p) - p.T @ p
-    return grad
-{% endhighlight %}
 
 ```python
 def softmax_grad(x):
@@ -215,27 +208,15 @@ $$
 \end{align*}
 $$
 
+<aside><p>
+$\Vector{p}_{1\times n}(p^\top)_{n\times1}=P_{n\times n}$ is a matrix. $G_{1\times n}$ itself is a vector, so $G\Vector{p}^\top\Vector{p}$ is a vector-matrix multiplication. However, by matrix multiplication commutativity, we can carry out $G\Vector{p}^\top$ first which is a dot product of two vectors, resulting in a scalar. Then we multiply this scalar by the vector $\Vector{p}$.
+
+Likewise, since we're using $\mathrm{diag}(\cdot)$ to denote a diagonal matrix whose diagonal elements are given by the vector argument, $G\mathrm{diag}(\Vector{p})$ is also a vector-by-matrix multiplication. This is the same as elementwise multiplication of $G$ and $\Vector{p}$.
+
+Once we write the equations, we can factor out a $\Vector{p}$ from the write, which results in the final equation.
+</p> </aside>
+
 So now the code becomes
-
-<d-code block language="python">
-def softmax_grad(x, g):
-    p = softmax(x, axis=-1)
-    
-    g_dot_p = np.vecdot(g, p)[..., np.newaxis]
-    grad    = (g - g_dot_p) * p
-    
-    return grad
-</d-code>
-
-{% highlight python %}
-def softmax_grad(x, g):
-    p = softmax(x, axis=-1)
-    
-    g_dot_p = np.vecdot(g, p)[..., np.newaxis]
-    grad    = (g - g_dot_p) * p
-    
-    return grad
-{% endhighlight %}
 
 ```python
 def softmax_grad(x, g):
