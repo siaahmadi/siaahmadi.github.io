@@ -51,7 +51,18 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/cv/";
           },
-        },{id: "post-a-two-layer-neural-network-from-first-principles",
+        },{id: "post-the-softmax-function-and-its-gradient",
+        
+          title: "The softmax function and its gradient",
+        
+        description: "Detailed derivation of the gradient of softmax",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/softmax-gradient/";
+          
+        },
+      },{id: "post-a-two-layer-neural-network-from-first-principles",
         
           title: "A two layer neural network from first principles",
         
