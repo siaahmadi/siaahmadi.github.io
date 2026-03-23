@@ -91,8 +91,8 @@ bing_site_verification: # out your bing-site-verification ID (Bing Webmaster)
 # Blog
 # -----------------------------------------------------------------------------
 
-blog_name: Less informal project presentations # blog_name will be displayed in your blog page
-blog_description: Siavash Ahmadi's blog posts
+blog_name: Blog posts # blog_name will be displayed in your blog page
+blog_description: Less informal project presentations, my own notes, and miscellaneous stuff
 permalink: /blog/:year/:title/
 lsi: false # produce an index for related posts
 
