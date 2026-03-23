@@ -51,7 +51,18 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/cv/";
           },
-        },{id: "post-a-post-with-plotly-js",
+        },{id: "post-a-two-layer-neural-network-from-first-principles",
+        
+          title: "A two layer neural network from first principles",
+        
+        description: "Detailed derivation of the forward and backward pass equations for a two layer neural network (multi-layer perceptron)",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/mlp/";
+          
+        },
+      },{id: "post-a-post-with-plotly-js",
         
           title: "a post with plotly.js",
         
