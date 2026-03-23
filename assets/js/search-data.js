@@ -51,7 +51,18 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/cv/";
           },
-        },{id: "post-the-softmax-function-and-its-gradient",
+        },{id: "post-can-nine-women-make-a-baby-in-one-month-scaling-up-autoregressive-inference-in-llms",
+        
+          title: "Can nine women make a baby in one month? Scaling up autoregressive inference...",
+        
+        description: "We will explore a novel architecture that enables scaling up inference in large language models without sacrificing the autoregressive factorization of the output&#39;s joint probability distribution.",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/scaling-llm-inference/";
+          
+        },
+      },{id: "post-the-softmax-function-and-its-gradient",
         
           title: "The softmax function and its gradient",
         
@@ -357,6 +368,17 @@ ninja.data = [{
         handler: () => {
           
             window.location.href = "/blog/2021/diagrams/";
+          
+        },
+      },{id: "post-strong-scaling-of-autogressive-inference",
+        
+          title: "Strong scaling of autogressive inference",
+        
+        description: "A brief presentation of the paper of the same name",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2021/original-template/";
           
         },
       },{id: "post-a-distill-style-blog-post",
