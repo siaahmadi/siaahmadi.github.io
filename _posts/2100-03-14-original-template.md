@@ -1,38 +1,30 @@
 ---
 layout: distill
-title: a distill-style blog post
-description: an example of a distill-style blog post and main elements
-tags: distill formatting
-giscus_comments: false
+title: Strong scaling of autogressive inference
+description: A brief presentation of the paper of the same name
+tags: ai, llm, systems, optimization, transformer
+giscus_comments: true
 date: 2021-05-22
-featured: false
+featured: true
 mermaid:
-  enabled: false
+  enabled: true
   zoomable: true
-code_diff: false
-map: false
+code_diff: true
+map: true
 chart:
-  chartjs: false
-  echarts: false
-  vega_lite: false
-tikzjax: false
-typograms: false
+  chartjs: true
+  echarts: true
+  vega_lite: true
+tikzjax: true
+typograms: true
 
 authors:
-  - name: Albert Einstein
-    url: "https://en.wikipedia.org/wiki/Albert_Einstein"
+  - name: Siavash Ahmadi
+    url: "https://siaahmadi.github.io/"
     affiliations:
-      name: IAS, Princeton
-  - name: Boris Podolsky
-    url: "https://en.wikipedia.org/wiki/Boris_Podolsky"
-    affiliations:
-      name: IAS, Princeton
-  - name: Nathan Rosen
-    url: "https://en.wikipedia.org/wiki/Nathan_Rosen"
-    affiliations:
-      name: IAS, Princeton
+      name: Independent Researcher
 
-bibliography: 2018-12-22-distill.bib
+bibliography: 2026-03-14-scaling.bib
 
 # Optionally, you can add a table of contents to your post.
 # NOTES:
@@ -61,21 +53,21 @@ toc:
 
 # Below is an example of injecting additional post-specific styles.
 # If you use this post as a template, delete this _styles block.
-_styles: >
-  .fake-img {
-    background: #bbb;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 0px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: 12px;
-  }
-  .fake-img p {
-    font-family: monospace;
-    color: white;
-    text-align: left;
-    margin: 12px 0;
-    text-align: center;
-    font-size: 16px;
-  }
+# _styles: >
+#   .fake-img {
+#     background: #bbb;
+#     border: 1px solid rgba(0, 0, 0, 0.1);
+#     box-shadow: 0 0px 4px rgba(0, 0, 0, 0.1);
+#     margin-bottom: 12px;
+#   }
+#   .fake-img p {
+#     font-family: monospace;
+#     color: white;
+#     text-align: left;
+#     margin: 12px 0;
+#     text-align: center;
+#   }
+#     font-size: 16px;
 ---
 
 ## Equations
