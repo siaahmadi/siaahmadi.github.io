@@ -2,7 +2,7 @@
 layout: distill
 title: The softmax function and its gradient
 description: Detailed derivation of the gradient of softmax
-tags: ai, optimization, neural network, math
+tags: ai, optimization, neural-network, math
 giscus_comments: false
 date: 2026-03-05
 featured: false
@@ -158,7 +158,7 @@ $$
         p_2p_1 & p_2p_2 & \cdots & p_2p_n \\
         \vdots & & & \vdots \\
         p_np_1 & p_np_2 & \cdots & p_np_n \\
-    \end{bmatrix} \\[2mm]
+    \end{bmatrix} \\[6mm]
     \mathrm{diag}(\Vector{p}) - \Vector{p}\top \Vector{p} & = \begin{bmatrix}
         p_1 & 0 & \cdots & 0 \\
         0 & p_2 & \cdots & 0 \\
@@ -169,25 +169,25 @@ $$
         p_2p_1 & p_2p_2 & \cdots & p_2p_n \\
         \vdots & & & \vdots \\
         p_np_1 & p_np_2 & \cdots & p_np_n \\
-    \end{bmatrix} \\[2mm]
+    \end{bmatrix} \\[6mm]
     & = \begin{bmatrix}
         p_1 - p_1p_1 & -p_1p_2 & \cdots & -p_1p_n \\
         -p_2p_1 & p_2 - p_2p_2 & \cdots & -p_2p_n \\
         \vdots & & & \vdots \\
         -p_np_1 & -p_np_2 & \cdots & p_n - p_np_n \\
-    \end{bmatrix}\\[2mm]
+    \end{bmatrix}\\[6mm]
     & = \begin{bmatrix}
         p_1 (1 - p_1) & p_1(0-p_2) & \cdots & p_1(0-p_n) \\
         p_2 (0 - p_1) & p_2(1-p_2) & \cdots & p_2(0-p_n) \\
         \vdots & & & \vdots \\
         p_n (0 - p_1) & p_n(0-p_2) & \cdots & p_n(1-p_n) \\
-    \end{bmatrix}\\[2mm]
+    \end{bmatrix}\\[6mm]
     & = \begin{bmatrix}
         p_1 (\delta_{ij} - p_1) & p_1(\delta_{ij}-p_2) & \cdots & p_1(\delta_{ij}-p_n) \\
         p_2 (\delta_{ij} - p_1) & p_2(\delta_{ij}-p_2) & \cdots & p_2(\delta_{ij}-p_n) \\
         \vdots & & & \vdots \\
         p_n (\delta_{ij} - p_1) & p_n(\delta_{ij}-p_2) & \cdots & p_n(\delta_{ij}-p_n) \\
-    \end{bmatrix}\\[2mm]
+    \end{bmatrix}\\[6mm]
     & = \Vector{p}_i(\delta_{ij} - \Vector{p}_j) = \nabla_{x_i}\smxv{x}_j
 \end{align*}
 $$
@@ -216,7 +216,7 @@ $(p^\top)_{n\times1}\Vector{p}_{1\times n}=P_{n\times n}$ is a matrix. $G_{1\tim
 Likewise, since we're using $\mathrm{diag}(\cdot)$ to denote a diagonal matrix whose diagonal elements are given by the vector argument, $G\mathrm{diag}(\Vector{p})$ is also a vector-by-matrix multiplication. This is the same as elementwise multiplication of $G$ and $\Vector{p}$.
 </p>
 <p>
-Once we write the equations, we can factor out a $\Vector{p}$ from the write, which results in the final equation.
+Once we write the equations, we can factor out a $\Vector{p}$ from the right, which gives the final equation.
 </p>
 </aside>
 
@@ -225,10 +225,8 @@ So now the code becomes
 ```python
 def softmax_grad(x, g):
     p = softmax(x, axis=-1)
-    
     g_dot_p = np.vecdot(g, p)[..., np.newaxis]
     grad    = (g - g_dot_p) * p
-    
     return grad
 ```
 
