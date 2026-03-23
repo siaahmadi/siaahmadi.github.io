@@ -73,6 +73,17 @@ ninja.data = [{
             window.location.href = "/blog/2026/softmax-gradient/";
           
         },
+      },{id: "post-the-transformer",
+        
+          title: "The Transformer",
+        
+        description: "Discussions of the Transformer architecture, atlernate visualizations, and reinterpretation as a database.",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2026/transformer/";
+          
+        },
       },{id: "post-a-two-layer-neural-network-from-first-principles",
         
           title: "A two layer neural network from first principles",
