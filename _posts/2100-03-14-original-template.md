@@ -5,7 +5,7 @@ description: A brief presentation of the paper of the same name
 tags: ai, llm, systems, optimization, transformer
 giscus_comments: true
 date: 2021-05-22
-featured: true
+featured: false
 mermaid:
   enabled: true
   zoomable: true
