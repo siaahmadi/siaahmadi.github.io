@@ -92,7 +92,7 @@ bing_site_verification: # out your bing-site-verification ID (Bing Webmaster)
 # -----------------------------------------------------------------------------
 
 blog_name: Blog posts # blog_name will be displayed in your blog page
-blog_description: Less informal project presentations, my own notes, and miscellaneous stuff
+blog_description: More informal project presentations, my own notes, and miscellaneous stuff
 permalink: /blog/:year/:title/
 lsi: false # produce an index for related posts
 
