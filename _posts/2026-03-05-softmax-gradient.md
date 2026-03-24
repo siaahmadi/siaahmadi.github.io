@@ -211,7 +211,7 @@ $$
 
 <aside>
 <p>
-$(p^\top)_{n\times1}\Vector{p}_{1\times n}=P_{n\times n}$ is a matrix. $G_{1\times n}$ itself is a vector, so $G\Vector{p}^\top\Vector{p}$ is a vector-matrix multiplication. However, by matrix multiplication commutativity, we can carry out $G\Vector{p}^\top$ first which is a dot product of two vectors, resulting in a scalar. Then we multiply this scalar by the vector $\Vector{p}$.
+$(p^\top)_{n\times1}\Vector{p}_{1\times n}=P_{n\times n}$ is a matrix. $G_{1\times n}$ itself is a vector, so $G(\Vector{p}^\top\Vector{p})$ is a vector-matrix multiplication. However, by matrix multiplication associativity, we can carry out $G\Vector{p}^\top$ first which is a dot product of two vectors, resulting in a scalar. Then we multiply this scalar by the vector $\Vector{p}$.
 </p>
 <p>
 Likewise, since we're using $\mathrm{diag}(\cdot)$ to denote a diagonal matrix whose diagonal elements are given by the vector argument, $G\mathrm{diag}(\Vector{p})$ is also a vector-by-matrix multiplication. This is the same as elementwise multiplication of $G$ and $\Vector{p}$.
