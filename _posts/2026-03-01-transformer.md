@@ -2,30 +2,30 @@
 layout: post
 title: The Transformer
 description: Discussions of the Transformer architecture, atlernate visualizations, and reinterpretation as a database.
-tags: ai, optimization, neural-network, math, transformer
+tags: ai, optimization, neural-network, equations, transformer
 categories: AI, from-scratch
 giscus_comments: false
 date: 2026-03-01
 featured: true
-mermaid:
-  enabled: true
-  zoomable: true
-code_diff: true
-map: true
-chart:
-  chartjs: true
-  echarts: true
-  vega_lite: true
-tikzjax: true
-typograms: true
+# mermaid:
+#   enabled: true
+#   zoomable: true
+# code_diff: true
+# map: true
+# chart:
+#   chartjs: true
+#   echarts: true
+#   vega_lite: true
+# tikzjax: true
+# typograms: true
 toc:
   sidebar: left
 
-authors:
-  - name: Siavash Ahmadi
-    url: "https://siaahmadi.github.io/from_scratch"
-    affiliations:
-      name: Independent Researcher
+# authors:
+#   - name: Siavash Ahmadi
+#     url: "https://siaahmadi.github.io/from_scratch"
+#     affiliations:
+#       name: Independent Researcher
 
 bibliography: 2026-03-01-transformer.bib
 
@@ -35,14 +35,14 @@ bibliography: 2026-03-01-transformer.bib
 #     for hyperlinks within the post to work correctly.
 #   - we may want to automate TOC generation in the future using
 #     jekyll-toc plugin (https://github.com/toshimaru/jekyll-toc).
-toc:
-  - name: The Transformer Architecture
-    subsections:
-      - name: Transformer architecture, better visualized
-      - name: Attention as a generalization of a database
-  - name: Full Derivation of Multihead Attention
-    subsections:
-      - name: 
+# toc:
+#   - name: The Transformer Architecture
+#     subsections:
+#       - name: Transformer architecture, better visualized
+#       - name: Attention as a generalization of a database
+#   - name: Full Derivation of Multihead Attention
+#     subsections:
+#       - name: 
 
 ---
 
