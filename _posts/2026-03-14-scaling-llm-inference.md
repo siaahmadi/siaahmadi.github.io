@@ -146,4 +146,4 @@ And finally, here's how it expanded them back to full paragraphs:
 
 This is obviously not as high-quality as the actual paper's introduction. For example, it does not even mention "phase precession" explicitly, and its vague description of it is not even accurate (e.g., "with each cell advancing toward earlier phases" -> the cells don't advance, it's their spike timing relative to theta oscillations that advances). And more importantly, it doesn't hit the main points that the paper is about to satisfactorily set up the scientific gap and our contributions.
 
-Now, despite those caveats, this illustrates a main point: that the *core ideas* and *actual tokens* are somewhat separable (this is not necessarily my idea and there are serious people talking about this all the time, e.g., {% cite fedorenko2024language %}).
+Now, despite those caveats, this illustrates a main point: that the *core ideas* and *actual tokens* are somewhat separable (this is not necessarily my idea and there are serious people talking about this all the time, e.g., <d-cite key="fedorenko2024language"></d-cite>).
