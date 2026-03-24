@@ -90,7 +90,7 @@ An important point here is that PyTorch's impelmentation of the transformer laye
 
 # Attention as a generalization of a database
 
-(I can't recall where I first encountered this interpretation but it may have been by Andrej Karpahty.)
+(I can't recall where I first encountered this interpretation but it may have been by Andrej Karpathy.)
 
 The core of the transformer is the attention mechanism (forget about the bells and whistels like "multi-head" and the "output" and the "dense layer" and "layer norm" etc etc; even the "in-projection" steps should be ignored for now). At the most basic level the transformer is powerful because it does a context-dependent computation (unlike, say, a [multi-layer perceptron]({% post_url 2026-02-18-mlp %})).
 
