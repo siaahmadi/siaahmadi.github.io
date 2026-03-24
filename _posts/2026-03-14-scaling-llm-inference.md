@@ -1,7 +1,7 @@
 ---
 layout: distill
 title: Can you get home twice as fast in two cars instead of one? Scaling up autoregressive inference in LLMs
-description: We will explore a novel architecture that enables scaling up inference in large language models without sacrificing the autoregressive factorization of the output's joint probability distribution.
+description: We will explore the Tiered Transformer, a novel architecture that enables scaling up inference in large language models without sacrificing the autoregressive factorization of the output's joint probability distribution.
 tags: ai, optimization, neural-network, llm, systems, transformer
 categories: AI, research
 giscus_comments: false
@@ -43,26 +43,32 @@ toc:
 
 # Below is an example of injecting additional post-specific styles.
 # If you use this post as a template, delete this _styles block.
-_styles: >
-  .fake-img {
-    background: #bbb;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    box-shadow: 0 0px 4px rgba(0, 0, 0, 0.1);
-    margin-bottom: 12px;
-  }
-  .fake-img p {
-    font-family: monospace;
-    color: white;
-    text-align: left;
-    margin: 12px 0;
-    text-align: center;
-  }
-    font-size: 16px;
+# _styles: >
+#   .fake-img {
+#     background: #bbb;
+#     border: 1px solid rgba(0, 0, 0, 0.1);
+#     box-shadow: 0 0px 4px rgba(0, 0, 0, 0.1);
+#     margin-bottom: 12px;
+#   }
+#   .fake-img p {
+#     font-family: monospace;
+#     color: white;
+#     text-align: left;
+#     margin: 12px 0;
+#     text-align: center;
+#   }
+#     font-size: 16px;
 ---
 
 # THIS POST IS CURRENTLY IN DEVELOPMENT. PLEASE COME BACK SOON!
 
-(
+Some tasks are inherently sequential. So in case there was any doubt about the question in the title, the answer is no (😅). Even if you were to attempt the ill-advised trick of splitting yourself in half to be placed in two separate cars, you still won't get home twice as fast, unfortunately. Crucially, this does not even depend on splitting yourself in half: if you and your partner were going home from the opera in two separate cars, you won't get home any faster than if you went in the same car.
+
+Obviously, this is a rather facetious way to make a simple point: inherently sequential tasks cannot be completed faster by using additional resources. Large language models generate their responses sequentially, and that means generating a long response can take a bit too long, no matter how many GPUs you throw at the problem.
+
+This post about how the problem of next-token prediction can be transformed to make it possible to complete a long response faster using more GPUs.
+
+## A fun little experiment
 
 Before we dive in, I want to share a fun little experiment. I used Google NotebookLM to generate a "podcast" from the companion [preprint]( {% link assets/pdf/Tiered_Transformer.pdf %}). Take a listen:
 
@@ -75,23 +81,28 @@ Before we dive in, I want to share a fun little experiment. I used Google Notebo
     An AI-generated "podcast" segment on the topic of this blog post.
 </div>
 
-)
+## Intro
 
 Think back to your last piece of writing longer than a single paragraph. Did you write it linearly from start to finish? Chances are, _not_.
 
-Whether we’re drafting a paper or a blog post, most of us probably don't sit down and produce a linear stream of consciousness from the first word to the last.
+Whether drafting a paper or a blog post, most of us probably don't sit down and produce a linear stream of consciousness from the first word to the last.
 
-In practice, we’re architects before we’re prose stylists. We start by sketching the skeleton, breaking a monolithic thesis into (semi-)independent yet interrelated sections that we can tackle in isolation. It’s a recursive decomposition: sections dissolve into paragraphs, and paragraphs into sentences, allowing us to build the work semi-independently as the ideas mature.
+In practice, we start by sketching the skeleton, breaking a monolithic thesis into (semi-)independent yet interrelated sections that we can tackle in isolation. We might even do this recursively: sections might dissolve into paragraphs, and paragraphs into sentences, allowing us to build the work semi-independently as the ideas mature.
 
-Among many benefit of working in this way is that (at least in theory) you could deploy the task of writing each section to a different person. If you're writing a book, you can architect the main story, come up with the general outline of say 10 chapters, and then outsource the task of actually writin the chapters to 10 different ghost writers. In this way, you can actually finish your book 10 times as fast!
+Among the many benefit of working in this way is that (at least in theory) you could deploy the task of writing each section to a different person. If you're writing a book, you can architect the main story, come up with the general outline of say 10 chapters, and then outsource the task of actually writing the chapters to 10 different ghost writers. In this way, you can actually finish your book 10 times as fast!
 
-Large language models (LLMs), by contrast, generate text in a strictly linear, autoregressive fashion: predicting one token at a time, conditioned only on the sequence that has come before it. This sequential nature means LLMs build the “architecture” and the “style” simultaneously, token by token, without the benefit of a high-level blueprint. While this produces impressively coherent output in many cases, it cannot be distributed among parallel workers.
+However, this is not how Large language models (LLMs) generate text. They do so in a strictly linear, autoregressive fashion: predicting one token at a time, conditioned only on the sequence that has come before it. This sequential nature means LLMs build the “architecture” and the “style” simultaneously, token by token, without the benefit of a high-level blueprint. While this produces impressively coherent output in many cases, it cannot be distributed among parallel workers.
 
 
 <!-- Now, sometimes a breakthrough in one section forces a refactor of three others, but the core workflow remains the same: a non-linear descent from abstract concepts to concrete words. -->
 
+## A solution
 
-## Here's an example:
+Now, what if we trained a model that mimics how we write? Specifically, let's train a model to only create a blueprint of the answer by generting tokens that capture the core ideas of only one section of the response.
+
+<!-- more details on the model, and how it can be thought of as an autoencoder -->
+
+### Here's an example:
 
 Let's take a look at an example. I want to look at the Introduction of one of my PhD papers, which is [publicly available here](https://doi.org/10.1038/s41467-024-54943-2). I asked [Grok](https://grok.com/) and [Claude](https://claude.ai) to summarize each paragraph, and here's what they wrote (I edited and merged them):
 
@@ -126,9 +137,13 @@ I asked Claude this time to expand the first four of these into possible paragra
 And finally, here's how it expanded them back to full paragraphs:
 
 >The dentate gyrus is a hippocampal subregion critical for forming distinct memory representations through sparse coding. Situated at the entry point of the canonical hippocampal circuit, it receives the majority of its cortical drive via the perforant path and transforms dense, overlapping cortical inputs into sparse, highly differentiated activity patterns. This process, often referred to as pattern separation, is thought to minimize interference between similar memories by ensuring that distinct experiences are represented by non-overlapping neuronal ensembles. The unusually low baseline firing rates of dentate granule cells, combined with powerful feedback inhibition from local interneurons, are key cellular mechanisms that enforce this sparsity.
-
+>
 >DG inputs regulate CA3 sharp-wave ripples, high-frequency oscillatory events linked to memory consolidation and replay. CA3, the principal downstream target of the dentate gyrus via the mossy fiber pathway, possesses extensive recurrent collateral connections that endow it with autoassociative properties suited to pattern completion and sequence storage. Periods of behavioral quiescence and slow-wave sleep are punctuated by sharp-wave ripples, during which reactivation of previously encoded neuronal sequences is thought to transfer information to neocortical long-term stores. The degree to which the dentate gyrus gates or modulates this consolidation process through its projections to CA3 has become an important question for understanding how memory traces are stabilized over time.
-
+>
 >Beyond sharp-wave ripples, theta oscillations dominate hippocampal dynamics during active exploration and memory encoding. This 6–10 Hz rhythm, sustained by a network encompassing the medial septum and entorhinal cortex, imposes a recurring temporal structure on hippocampal activity that is thought to segregate encoding and retrieval processes across successive cycles. Both the dentate gyrus and CA3 receive prominent theta-modulated excitation from the medial entorhinal cortex, raising the question of how these two external inputs interact and whether they make separable contributions to CA3 network dynamics during behavior.
-
+>
 >During theta, place cells fire in compressed sequential order reflecting the animal's past and future trajectory. As the animal moves through an environment, hippocampal neurons with overlapping place fields discharge in a fixed order within each theta cycle, with each cell advancing toward earlier phases as the animal progresses through its field. The resulting spike sequences, compressed from behavioral timescales into windows compatible with synaptic plasticity, are candidate substrates for the rapid encoding of spatial trajectories. Determining which afferent inputs to CA3 are necessary for generating and maintaining this temporal organization is therefore essential for understanding how the hippocampal circuit constructs and stores sequential representations of experience.
+
+This is obviously not as high-quality as the actual paper's introduction. For example, it does not even mention "phase precession" explicitly, and its vague description of it is not even accurate (e.g., "with each cell advancing toward earlier phases" -> the cells don't advance, it's their spike timing relative to theta oscillations that advances). And more importantly, it doesn't hit the main points that the paper is about to satisfactorily set up the scientific gap and our contributions.
+
+Now, despite those caveats, this illustrates a main point: that the *core ideas* and *actual tokens* are somewhat separable (this is not necessarily my idea and there are serious people talking about this all the time, e.g., {% cite fedorenko2024language %}).
