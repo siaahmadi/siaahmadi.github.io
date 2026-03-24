@@ -64,7 +64,7 @@ _styles: >
 
 (
 
-Before we dive in, I want to share a fun little experiment. I used Google NotebookLM to generate a "podcast" from the companion [preprint]( {% link "assets/pdf/Tiered_Transformer.pdf" %}). Take a listen:
+Before we dive in, I want to share a fun little experiment. I used Google NotebookLM to generate a "podcast" from the companion [preprint]( {% link assets/pdf/Tiered_Transformer.pdf %}). Take a listen:
 
 <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
