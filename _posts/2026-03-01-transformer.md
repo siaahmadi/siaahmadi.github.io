@@ -3,6 +3,7 @@ layout: distill
 title: The Transformer
 description: Discussions of the Transformer architecture, atlernate visualizations, and reinterpretation as a database.
 tags: ai, optimization, neural-network, math, transformer
+categories: AI, from-scratch
 giscus_comments: false
 date: 2026-03-01
 featured: true
@@ -54,7 +55,7 @@ The figures in the Transformer paper are really confusing to me. I think just be
 
 <center><img src="./images/attention_layout1.png" alt="End-to-end attention schematic for a single head" title="Attention mechanism, end-to-end" width="800"/></center>
 
-This is the original paper's description of the transformer self-attention. Note that it's *self-attention* not *cross-attention* because the inputs are all the same (the "self" is the input giving rise to $K$ and $V$). This schematic is meant to illustrate a simplified picture and show you how the different matrix sizes match up. The boxes are sized carefully to match the matrix product dimension rules. For each matrix multiplication $C=AB$ the matrix $A_{m\times p}$ is situation to the left, matrix $B_{p\times n}$ is situated to the top and $C_{m\times n}$ is placed at the center. If you think of these boxes in 3D, we're "lifting up" $A$ and $B and requiring that their heights $p$ be the same. Of course the length $m$ and widht $n$ can vary arbitrarily.
+This is the original paper's description of the transformer self-attention. Note that it's *self-attention* not *cross-attention* because the inputs are all the same (the "self" is the input giving rise to $K$ and $V$). This schematic is meant to illustrate a simplified picture and show you how the different matrix sizes match up. The boxes are sized carefully to match the matrix product dimension rules. For each matrix multiplication $C=AB$ the matrix $A_{m\times p}$ is situation to the left, matrix $B_{p\times n}$ is situated to the top and $C_{m\times n}$ is placed at the center. If you think of these boxes in 3D, we're "lifting up" $A$ and $B$ and requiring that their heights $p$ be the same. Of course the length $m$ and widht $n$ can vary arbitrarily.
 
 Nvidia has a really intuitive illustration of this to demonstrate how their tensor cores work:
 
@@ -69,7 +70,7 @@ Nvidia has a really intuitive illustration of this to demonstrate how their tens
 </div>
 </center>
 
-(Image displayed directly from the source: https://www.nvidia.com/content/dam/en-zz/Solutions/Data-Center/tensorcore/nvidia-tensor-cores-og-social-1200x630-r1.jpg; if viewing on Github, chances are this is not cropping properly so please just focus on the illustration on the left)
+(Image displayed directly from the source: [https://www.nvidia.com/content/dam/en-zz/Solutions/Data-Center/tensorcore/nvidia-tensor-cores-og-social-1200x630-r1.jpg](https://www.nvidia.com/content/dam/en-zz/Solutions/Data-Center/tensorcore/nvidia-tensor-cores-og-social-1200x630-r1.jpg); if viewing on Github, chances are this is not cropping properly so please just focus on the illustration on the left)
 
 Here, the cyan matrix is $A$, the purple is $B$, and the results $C$ is in green. The gray 3D strucutre in the middle is the result of the multplications before the sumation (recall $C_{ij}=\sum_kA_{ik}B_{kj}$, so each vertical column of the gray structure is indexed by $k$ and comes from the product of the corresponding row $i$ in $A$ and column $j$ in $B$). My schematic is this picture viewed from above, and with the cyan and purple matrices laid flat.
 
@@ -89,7 +90,9 @@ An important point here is that PyTorch's impelmentation of the transformer laye
 
 # Attention as a generalization of a database
 
-The core of the transformer is the attention mechanism (forget about the bells and whistels like "multi-head" and the "output" and the "dense layer" and "layer norm" etc etc; even the "in-projection" steps should be ignored for now). At the most basic level the transformer is powerful because it does a context-dependent computation (unlike, say, a [multi-layer perceptron](https://siaahmadi.github.io/blog/2026/mlp/)).
+(I can't recall where I first encountered this interpretation but it may have been by Andrej Karpahty.)
+
+The core of the transformer is the attention mechanism (forget about the bells and whistels like "multi-head" and the "output" and the "dense layer" and "layer norm" etc etc; even the "in-projection" steps should be ignored for now). At the most basic level the transformer is powerful because it does a context-dependent computation (unlike, say, a [multi-layer perceptron]({% post_url 2026-02-18-mlp %})).
 
 Below I'm comparing the attention mechanism to a Python dictionary. I use the terms "dictionary" and "database" interchangeably.
 
@@ -712,6 +715,11 @@ $$
     \end{bmatrix}^\top\Vector{W^o} \label{eqn:multihead_attn}
 \end{align}
 $$
+<aside>
+<p>
+This is it! One equation to rule them all!
+</p>
+</aside>
 
 where the three-input $\Vector{Z}$ (the multiheaded attention with $h$ heads) is parameterized by $3h+1$ matrices: $\Vector{W}_i\Vector{^q}$, $\Vector{W}_i\Vector{^k}$, $\Vector{W}_i\Vector{^v}$, and $\Vector{W^o}$, $i=1,\ldots,h$.
 
@@ -739,7 +747,7 @@ Here, $d_\text{model} = hd_k$ is the *dimensionality of the model*, i.e., the di
 
 #### Masked Softmax
 
-For the softmax gradient, see [softmax and its gradient (PDF)](../utils/softmax_gradient.pdf).
+For the softmax gradient, see [softmax and its gradient post]({% post_url 2026-03-05-softmax-gradient %}).
 
 | Inputs | Forward pass operations | Outputs |
 |--------|------------------------|---------|
@@ -799,13 +807,18 @@ $$
 
 $$
 \begin{align*}
-    \Zforward && \tag*{(forward pass)} \\[3mm]
-    \dZda & ,\quad \dZdWo && \tag*{(local gradients)}\\[3mm]
-    \dLda & ,\quad \dLdWo && \tag*{(upstream of lower operations)}\\
+    \Zforward \\[3mm]
+    \dZda & ,\quad \dZdWo \\[3mm]
+    \dLda & ,\quad \dLdWo \\
 \end{align*}
 $$
 
-To match the dimensionality of $\Dp[\Ll]{\Wo}$ with that of $\Wo$, we must sum over the batch dimension[^1]:
+To match the dimensionality of $\Dp[\Ll]{\Wo}$ with that of $\Wo$, we must sum over the batch dimension:
+<aside>
+<p>
+This is not the *real* reason but it sounds like a better mnemonic. The real reason is that by performing the preceding calculations, we have computed $N$ different gradients as a result of the $N$ batches, and that, by chain rule, gradients flowing in to a parameter from multiple downstream computations sum at the parameter.
+</p>
+</aside>
 
 $$
 \Dp[\Ll]{\Wo} = \sum_{b\,\in\,\text{batch}}\left(\Dp[\Z]{\Wo}G\right)_b \in \mathbb{R}^{hd_v \times d_\text{model}}
@@ -1082,5 +1095,3 @@ $$
 $$
 
 Similar arguments hold for the other matrices.
-
-[^1]: This is not the *real* reason but it sounds like a better mnemonic. The real reason is that by performing the preceding calculations, we have computed $N$ different gradients as a result of the $N$ batches, and that, by chain rule, gradients flowing in to a parameter from multiple downstream computations sum at the parameter.
