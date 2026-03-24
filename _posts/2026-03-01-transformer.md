@@ -1,5 +1,5 @@
 ---
-layout: distill
+layout: post
 title: The Transformer
 description: Discussions of the Transformer architecture, atlernate visualizations, and reinterpretation as a database.
 tags: ai, optimization, neural-network, math, transformer
@@ -18,6 +18,8 @@ chart:
   vega_lite: true
 tikzjax: true
 typograms: true
+toc:
+  sidebar: left
 
 authors:
   - name: Siavash Ahmadi
