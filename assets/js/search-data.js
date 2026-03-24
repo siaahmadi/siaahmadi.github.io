@@ -51,9 +51,9 @@ ninja.data = [{
           handler: () => {
             window.location.href = "/cv/";
           },
-        },{id: "post-can-nine-women-make-a-baby-in-one-month-scaling-up-autoregressive-inference-in-llms",
+        },{id: "post-can-you-get-home-twice-as-fast-in-two-cars-instead-of-one-scaling-up-autoregressive-inference-in-llms",
         
-          title: "Can nine women make a baby in one month? Scaling up autoregressive inference...",
+          title: "Can you get home twice as fast in two cars instead of one?...",
         
         description: "We will explore a novel architecture that enables scaling up inference in large language models without sacrificing the autoregressive factorization of the output&#39;s joint probability distribution.",
         section: "Posts",
