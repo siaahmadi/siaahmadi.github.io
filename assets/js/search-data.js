@@ -55,7 +55,7 @@ ninja.data = [{
         
           title: "Can you get home twice as fast in two cars instead of one?...",
         
-        description: "We will explore a novel architecture that enables scaling up inference in large language models without sacrificing the autoregressive factorization of the output&#39;s joint probability distribution.",
+        description: "We will explore the Tiered Transformer, a novel architecture that enables scaling up inference in large language models without sacrificing the autoregressive factorization of the output&#39;s joint probability distribution.",
         section: "Posts",
         handler: () => {
           
