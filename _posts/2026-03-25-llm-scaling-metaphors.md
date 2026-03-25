@@ -17,7 +17,7 @@ This is sometimes quoted as "9 women can't make a baby in 1 month" which stresse
 
 The first time I heard this phrase I thought it effectively conveyed the point in a funny way. When writing [my blog post](/blog/2026/scaling-llm-inference/), I considered using it but I wanted make sure it doesn't come across as dated. After all, it was first written over 50 years ago in 1975. So I asked my partner what she thought of it, and she said that it sounded odd. And that's when I took to AI for help me find a more neutral phrase that shares the Brooks analogy characteristics. I wanted a phrase that's intuitive, drives the main point home (that sequential tasks can't be scaled), and is perhaps a bit humorous. While I can't say I necessarily got the help I needed, I can say I was entertained!
 
-### So what did the AIs say?
+## So what did the AIs say?
 
 I first went to ChatGPT and asked it for help:
 
@@ -64,7 +64,7 @@ Or in the example "You can’t speed up a sunrise by hiring more people" it make
 In other examples ("Some problems scale with effort; others scale with time") it only says a syntactically correct sentence without proper semantic content. In "Parallel effort doesn’t help when the bottleneck is sequential" it completely misses the requirement that the phrase must be punchy and intuitive. In yet another ("Adding workers doesn’t shrink a critical path") it gives a vague and obscure analogy.
 
 
-### Can a more powerful model do better?
+## Can a more powerful model do better?
 
 Since I don't have a subscription to ChatGPT, I thought maybe I'm not using the most capable model. So I went to Gemini Pro next, and took my prompting lessons with me. I made sure to tell Gemini that the examples should be "punchy, intuitive, and non-technical." But my experience became only funnier (and more frustrating 😄).
 
