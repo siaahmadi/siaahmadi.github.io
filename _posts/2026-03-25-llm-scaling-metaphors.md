@@ -166,12 +166,12 @@ Here are a few punchy, non-technical alternatives that use widely known timeline
 
 ---
 
-**Summary Table**
-  Analogy	| The \"Man-Month\" Logic	| Why it's punchy
-  **9 Women** |	9 × 1 month ≠ Baby | The classic \"biological\" constraint.
-  **6 Ovens**	| 6 × 10 mins ≠ Cake | The \"chemical/process\" constraint.
-  **4 Projectors** | 4 × 30 mins ≠ Movie | The \"linear content\" constraint.
-  **10 Pilots** | 10 pilots ≠ Fast Flight | The \"physical/vessel\" constraint.
+**Summary Table**<br>
+  Analogy	| The \"Man-Month\" Logic	| Why it's punchy<br>
+  **9 Women** |	9 × 1 month ≠ Baby | The classic \"biological\" constraint.<br>
+  **6 Ovens**	| 6 × 10 mins ≠ Cake | The \"chemical/process\" constraint.<br>
+  **4 Projectors** | 4 × 30 mins ≠ Movie | The \"linear content\" constraint.<br>
+  **10 Pilots** | 10 pilots ≠ Fast Flight | The \"physical/vessel\" constraint.<br>
 
 ---
 
@@ -190,16 +190,16 @@ Would you like me to help you draft a short presentation slide or a \"TL;DR\" em
 
 If you want that same universal, \"physics-says-no\" logic, try these:
 
-1. **The Sleep Analogy**
- **\"Can eight people each sleep for one hour to give you a full night's rest?\"**
+1. **The Sleep Analogy**<br>
+ **\"Can eight people each sleep for one hour to give you a full night's rest?\"**<br>
  **Why it works:** Everyone knows a \"full night's rest\" is roughly eight hours. It’s a biological requirement that is inherently sequential; you cannot \"parallelize\" your exhaustion away by having others sleep on your behalf.
 
-2. **The Calendar Analogy**
- **\"Can seven people make it next Monday by tomorrow morning?\"**
+2. **The Calendar Analogy**<br>
+ **\"Can seven people make it next Monday by tomorrow morning?\"**<br>
  **Why it works:** It’s perfectly absurd. A week is seven days, and no amount of \"manpower\" or extra people living through the day can force the calendar to skip ahead. It highlights that some processes are simply passengers of time.
 
-3. **The Song Analogy**
- **\"Can four people finish a three-minute song in forty-five seconds?\"**
+3. **The Song Analogy**<br>
+ **\"Can four people finish a three-minute song in forty-five seconds?\"**<br>
  **Why it works:** A \"three-minute song\" is defined by its duration. If you play it four times faster, or have four people sing different parts simultaneously, you no longer have the song—you have noise. It perfectly captures the \"sequential logic\" requirement.
 
 Would you like me to tweak one of these into a one-sentence \"mic drop\" for your specific context?"
