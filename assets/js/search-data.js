@@ -238,6 +238,17 @@ ninja.data = [{
             window.location.href = "/blog/2024/chartjs/";
           
         },
+      },{id: "post-a-post-with-chat-conversations",
+        
+          title: "a post with chat conversations",
+        
+        description: "how to embed iMessage-style conversation threads in al-folio blog posts",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2024/chat-conversations/";
+          
+        },
       },{id: "post-a-post-with-tikzjax",
         
           title: "a post with TikZJax",
