@@ -170,12 +170,13 @@ Here are a few punchy, non-technical alternatives that use widely known timeline
 
 ---
 
-**Summary Table**<br>
-  Analogy	| The \"Man-Month\" Logic	| Why it's punchy<br>
-  **9 Women** |	9 × 1 month ≠ Baby | The classic \"biological\" constraint.<br>
-  **6 Ovens**	| 6 × 10 mins ≠ Cake | The \"chemical/process\" constraint.<br>
-  **4 Projectors** | 4 × 30 mins ≠ Movie | The \"linear content\" constraint.<br>
-  **10 Pilots** | 10 pilots ≠ Fast Flight | The \"physical/vessel\" constraint.<br>
+**Summary Table**
+
+  Analogy	| The \"Man-Month\" Logic	| Why it's punchy
+  **9 Women** |	9 × 1 month ≠ Baby | The classic \"biological\" constraint.
+  **6 Ovens**	| 6 × 10 mins ≠ Cake | The \"chemical/process\" constraint.
+  **4 Projectors** | 4 × 30 mins ≠ Movie | The \"linear content\" constraint.
+  **10 Pilots** | 10 pilots ≠ Fast Flight | The \"physical/vessel\" constraint.
 
 ---
 
