@@ -145,23 +145,23 @@ Here are a few punchy, non-technical alternatives that use widely known timeline
 
 ---
 
-1. **The Oven Example (The Most Intuitive)**
-  **\"Can six ovens bake a cake in ten minutes?\"**
+1. **The Oven Example (The Most Intuitive)**<br>
+  **\"Can six ovens bake a cake in ten minutes?\"**<br>
   **Why it works:** Everyone knows a cake takes about an hour to bake. If you try to bake it in ten minutes by \"parallelizing\" it across six ovens, you just end up with six cold pans of batter (or one burnt mess if you try to crank up the heat). It perfectly illustrates that the internal chemical process (like the logic of a project) requires its own time to \"set.\"
 
 
-2. **The Movie Example (The Most Logical)**
-  **\"Can four projectors finish a two-hour movie in thirty minutes?\"**
+2. **The Movie Example (The Most Logical)**<br>
+  **\"Can four projectors finish a two-hour movie in thirty minutes?\"**<br>
   **Why it works:** A movie is a purely linear experience. Even if you have the best technology and multiple people \"working\" on the playback, the story must unfold at its own pace for it to make sense. Watching the first 30 minutes on four different screens simultaneously doesn't mean you've \"seen the movie.\"
 
 
-3. The Pilot Example (The \"Transport\" Logic)
-  \"Can ten pilots fly a five-hour flight in thirty minutes?\"
+3. **The Pilot Example (The \"Transport\" Logic)**<br>
+  **\"Can ten pilots fly a five-hour flight in thirty minutes?\"**<br>
   **Why it works:** This highlights that the \"vessel\" (the project) is limited by its environment and physics. No matter how many experts you put in the cockpit, the plane cannot physically travel faster than its engine allows. Adding more pilots just crowds the cockpit without changing the arrival time.
 
 
-4. The Sleep Example (The Relatable Favorite)
-  \"Can seven people sleep for you on Sunday so you can stay awake all week?\"
+4. **The Sleep Example (The Relatable Favorite)**<br>
+  **\"Can seven people sleep for you on Sunday so you can stay awake all week?\"**<br>
   **Why it works:** While a bit different in structure, it attacks the idea of \"banking\" or \"outsourcing\" a fundamental, sequential need. Everyone knows you need roughly 8 hours of sleep every night. You can’t parallelize your rest for the week into a single day just because you have \"extra hours\" available on Sunday.
 
 ---
