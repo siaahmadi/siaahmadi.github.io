@@ -86,7 +86,7 @@ Since I don't have a subscription to ChatGPT, I thought maybe I'm not using the 
   
   **The \"Natural\" Limit\**
   
-  **"You can’t hatch an egg in one day by putting nine hens on it.\"**
+  **\"You can’t hatch an egg in one day by putting nine hens on it.\"**
   
   This is perhaps the closest spiritual successor to the baby analogy. It highlights that biological or physical processes have a fixed \"burn rate\" that extra labor cannot bypass.
   
