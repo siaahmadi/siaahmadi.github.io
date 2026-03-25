@@ -15,7 +15,7 @@ In 1975, Fred Brooks published his now-famous book on software project managemen
 
 This is sometimes quoted as "9 women can't make a baby in 1 month" which stresses the point that child-bearing (and by analogy many other inherently sequential tasks, including software projects) cannot be completed faster by assigning more workers to the task.
 
-The first time I heard this phrase I thought it effectively conveyed the point in a funny way. When writing my blog post {% link _posts/2026-03-14-scaling-llm-inference.md %}, I considered using it but I wanted make sure it doesn't come across as dated. After all, it was first written over 50 years ago in 1975. So I asked my partner what she thought of it, and she said that it sounded odd. And that's when I took to AI for help me find a more neutral phrase that shares the Brooks analogy characteristics. I wanted a phrase that's intuitive, drives the main point home (that sequential tasks can't be scaled), and is perhaps a bit humorous. While I can't say I necessarily got the help I needed, I can say I was entertained!
+The first time I heard this phrase I thought it effectively conveyed the point in a funny way. When writing [my blog post](/blog/2026-03-14-scaling-llm-inference), I considered using it but I wanted make sure it doesn't come across as dated. After all, it was first written over 50 years ago in 1975. So I asked my partner what she thought of it, and she said that it sounded odd. And that's when I took to AI for help me find a more neutral phrase that shares the Brooks analogy characteristics. I wanted a phrase that's intuitive, drives the main point home (that sequential tasks can't be scaled), and is perhaps a bit humorous. While I can't say I necessarily got the help I needed, I can say I was entertained!
 
 ### So what did the AIs say?
 
@@ -61,12 +61,12 @@ It's entirely unclear to me why it fails to understand the significance of the n
 
 Or in the example "You can’t speed up a sunrise by hiring more people" it makes a very non-sensical analogy. The "sun?!" How did ChatGPT miss the point that the "worker" should actually be performing the "task", i.e., have a causal influence on it?
 
-In other examples ("Some problems scale with effort; others scale with time") it only says a syntactically correct sentence without proper semantic content. In "Parallel effort doesn’t help when the bottleneck is sequential" it completely misses the requirement that the phrase must be punchy and intuitive. In yet others ("Adding workers doesn’t shrink a critical path") it gives a vague and obscure analogy.
+In other examples ("Some problems scale with effort; others scale with time") it only says a syntactically correct sentence without proper semantic content. In "Parallel effort doesn’t help when the bottleneck is sequential" it completely misses the requirement that the phrase must be punchy and intuitive. In yet another ("Adding workers doesn’t shrink a critical path") it gives a vague and obscure analogy.
 
 
 ### Can a more powerful model do better?
 
-Since I don't have a subscription to ChatGPT, I thought maybe I'm not using the most capable model. So I went to Gemini Pro next, and took a prompting lesson with me. I made sure to tell Gemini that the examples should be "punchy, intuitive, and non-technical." But my experience became only funnier (and more frustrating 😄).
+Since I don't have a subscription to ChatGPT, I thought maybe I'm not using the most capable model. So I went to Gemini Pro next, and took my prompting lessons with me. I made sure to tell Gemini that the examples should be "punchy, intuitive, and non-technical." But my experience became only funnier (and more frustrating 😄).
 
 
 
@@ -104,7 +104,7 @@ Since I don't have a subscription to ChatGPT, I thought maybe I'm not using the 
   
   **The \"Construction\" Reality\"**
   
-  Two people can't paint the same square inch at the same time.\"
+  **\"Two people can't paint the same square inch at the same time.\"**
   
   This is a very visceral way to explain **resource contention**. It makes it clear that if a task isn't divisible, a second person is literally just standing around waiting.
   
@@ -143,25 +143,22 @@ So again, I learned some prompting lessons, and went back to Gemini Pro with a c
 
 Here are a few punchy, non-technical alternatives that use widely known timelines:
 
---
+---
 
 1. **The Oven Example (The Most Intuitive)**
   **\"Can six ovens bake a cake in ten minutes?\"**
   **Why it works:** Everyone knows a cake takes about an hour to bake. If you try to bake it in ten minutes by \"parallelizing\" it across six ovens, you just end up with six cold pans of batter (or one burnt mess if you try to crank up the heat). It perfectly illustrates that the internal chemical process (like the logic of a project) requires its own time to \"set.\"
 
---
 
 2. **The Movie Example (The Most Logical)**
   **\"Can four projectors finish a two-hour movie in thirty minutes?\"**
   **Why it works:** A movie is a purely linear experience. Even if you have the best technology and multiple people \"working\" on the playback, the story must unfold at its own pace for it to make sense. Watching the first 30 minutes on four different screens simultaneously doesn't mean you've \"seen the movie.\"
 
---
 
 3. The Pilot Example (The \"Transport\" Logic)
   \"Can ten pilots fly a five-hour flight in thirty minutes?\"
   **Why it works:** This highlights that the \"vessel\" (the project) is limited by its environment and physics. No matter how many experts you put in the cockpit, the plane cannot physically travel faster than its engine allows. Adding more pilots just crowds the cockpit without changing the arrival time.
 
---
 
 4. The Sleep Example (The Relatable Favorite)
   \"Can seven people sleep for you on Sunday so you can stay awake all week?\"
