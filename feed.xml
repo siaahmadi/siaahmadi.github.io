@@ -1,4 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="https://siaahmadi.github.io/feed.xml" rel="self" type="application/atom+xml"/><link href="https://siaahmadi.github.io/" rel="alternate" type="text/html" hreflang="en"/><updated>2026-03-25T19:13:57+00:00</updated><id>https://siaahmadi.github.io/feed.xml</id><title type="html">blank</title><subtitle>A simple, whitespace theme for academics. Based on [*folio](https://github.com/bogoli/-folio) design. </subtitle><entry><title type="html">Can you get home twice as fast in two cars instead of one? Scaling up autoregressive inference in LLMs</title><link href="https://siaahmadi.github.io/blog/2026/scaling-llm-inference/" rel="alternate" type="text/html" title="Can you get home twice as fast in two cars instead of one? Scaling up autoregressive inference in LLMs"/><published>2026-03-14T00:00:00+00:00</published><updated>2026-03-14T00:00:00+00:00</updated><id>https://siaahmadi.github.io/blog/2026/scaling-llm-inference</id><content type="html" xml:base="https://siaahmadi.github.io/blog/2026/scaling-llm-inference/"><![CDATA[<h1 id="this-post-is-currently-in-development-please-come-back-soon">THIS POST IS CURRENTLY IN DEVELOPMENT. PLEASE COME BACK SOON!</h1> <p>Some tasks are inherently sequential. So in case there was any doubt about the question in the title, the answer is no (😅). Even if you were to attempt the ill-advised trick of splitting yourself in half to be placed in two separate cars, you still won’t get home twice as fast, unfortunately. Crucially, this does not even depend on splitting yourself in half: if you and your partner were going home from the opera in two separate cars, you won’t get home any faster than if you went in the same car.</p> <p>Obviously, this is a rather facetious way to make a simple point: inherently sequential tasks cannot be completed faster by using additional resources. Large language models generate their responses sequentially, and that means generating a long response can take a bit too long, no matter how many GPUs you throw at the problem.</p> <p>This post about how the problem of next-token prediction can be transformed to make it possible to complete a long response faster using more GPUs.</p> <h2 id="a-fun-little-experiment">A fun little experiment</h2> <p>Before we dive in, I want to share a fun little experiment. I used Google NotebookLM to generate a “podcast” from the companion <a href="/assets/pdf/Tiered_Transformer.pdf">preprint</a>. Take a listen:</p> <div class="row mt-3"> <div class="col-sm mt-3 mt-md-0"> <figure> <audio src="/assets/audio/Tiered_Transformers_enable_parallel_text_generation.m4a" controls=""/> </figure> </div> </div> <div class="caption"> An AI-generated "podcast" segment on the topic of this blog post. </div> <h2 id="intro">Intro</h2> <p>Think back to your last piece of writing longer than a single paragraph. Did you write it linearly from start to finish? Chances are, <em>not</em>.</p> <p>Whether drafting a paper or a blog post, most of us probably don’t sit down and produce a linear stream of consciousness from the first word to the last.</p> <p>In practice, we start by sketching the skeleton, breaking a monolithic thesis into (semi-)independent yet interrelated sections that we can tackle in isolation. We might even do this recursively: sections might dissolve into paragraphs, and paragraphs into sentences, allowing us to build the work semi-independently as the ideas mature.</p> <p>Among the many benefit of working in this way is that (at least in theory) you could deploy the task of writing each section to a different person. If you’re writing a book, you can architect the main story, come up with the general outline of say 10 chapters, and then outsource the task of actually writing the chapters to 10 different ghost writers. In this way, you can actually finish your book 10 times as fast!</p> <p>However, this is not how Large language models (LLMs) generate text. They do so in a strictly linear, autoregressive fashion: predicting one token at a time, conditioned only on the sequence that has come before it. This sequential nature means LLMs build the “architecture” and the “style” simultaneously, token by token, without the benefit of a high-level blueprint. While this produces impressively coherent output in many cases, it cannot be distributed among parallel workers.</p> <h2 id="a-solution">A solution</h2> <p>Now, what if we trained a model that mimics how we write? Specifically, let’s train a model to only create a blueprint of the answer by generting tokens that capture the core ideas of only one section of the response.</p> <h3 id="heres-an-example">Here’s an example:</h3> <p>Let’s take a look at an example. I want to look at the Introduction of one of my PhD papers, which is <a href="https://doi.org/10.1038/s41467-024-54943-2">publicly available here</a>. I asked <a href="https://grok.com/">Grok</a> and <a href="https://claude.ai">Claude</a> to summarize each paragraph, and here’s what they wrote (I edited and merged them):</p> <ol> <li>DG supports memory via sparse activity, pattern separation, and complex spatial working memory.</li> <li>CA3 sharp-wave ripples depend on DG during working memory and enable sequence replay, and aid planning.</li> <li>DG may correct sequence order in CA3; theta dominates active exploration and encoding.</li> <li>Theta phase precession compresses behavioral sequences into theta cycle firing, enabling synaptic storage.</li> <li>DG’s contribution to CA3 phase precession remains computationally proposed but experimentally untested.</li> <li>We found DG, not MEC, drives prospective coding in CA3 theta; new model explains oscillatory contributions.</li> </ol> <p>Now, this somewhat captures what I had in mind when I was actually trying to write a paragraph. The process did involve additional details, such as planning and iterating on writing and re-writing the core ideas, but each individual iteration followed a similar routine: I kept asking myself <em>what am I trying to say?</em> and <em>how should I string my words together to say that?</em>.</p> <p>The above points can be compressed even further:</p> <ol> <li>DG, broadly</li> <li>DG vs. CA3 sharp-wave ripples</li> <li>The broader circuit and role of theta</li> <li>Theta sequences</li> <li>The scientific gap</li> <li>Our contributions</li> </ol> <p>Now, it can be seen that each point (a) depends on the previous points, and (b) can be expanded into sentences in various ways.</p> <p>I asked Claude this time to expand the first four of these into possible paragraph outlines:</p> <ol> <li><strong>DG, broadly</strong>: The dentate gyrus is a hippocampal subregion critical for forming distinct memory representations through sparse coding.</li> <li><strong>DG vs. CA3 sharp-wave ripples</strong>: DG inputs regulate CA3 sharp-wave ripples, high-frequency oscillatory events linked to memory consolidation and replay.</li> <li><strong>The broader circuit and role of theta</strong>: Beyond sharp-wave ripples, theta oscillations dominate hippocampal dynamics during active exploration and memory encoding.</li> <li><strong>Theta sequences</strong>: During theta, place cells fire in compressed sequential order reflecting the animal’s past and future trajectory.</li> </ol> <p>And finally, here’s how it expanded them back to full paragraphs:</p> <blockquote> <p>The dentate gyrus is a hippocampal subregion critical for forming distinct memory representations through sparse coding. Situated at the entry point of the canonical hippocampal circuit, it receives the majority of its cortical drive via the perforant path and transforms dense, overlapping cortical inputs into sparse, highly differentiated activity patterns. This process, often referred to as pattern separation, is thought to minimize interference between similar memories by ensuring that distinct experiences are represented by non-overlapping neuronal ensembles. The unusually low baseline firing rates of dentate granule cells, combined with powerful feedback inhibition from local interneurons, are key cellular mechanisms that enforce this sparsity.</p> <p>DG inputs regulate CA3 sharp-wave ripples, high-frequency oscillatory events linked to memory consolidation and replay. CA3, the principal downstream target of the dentate gyrus via the mossy fiber pathway, possesses extensive recurrent collateral connections that endow it with autoassociative properties suited to pattern completion and sequence storage. Periods of behavioral quiescence and slow-wave sleep are punctuated by sharp-wave ripples, during which reactivation of previously encoded neuronal sequences is thought to transfer information to neocortical long-term stores. The degree to which the dentate gyrus gates or modulates this consolidation process through its projections to CA3 has become an important question for understanding how memory traces are stabilized over time.</p> <p>Beyond sharp-wave ripples, theta oscillations dominate hippocampal dynamics during active exploration and memory encoding. This 6–10 Hz rhythm, sustained by a network encompassing the medial septum and entorhinal cortex, imposes a recurring temporal structure on hippocampal activity that is thought to segregate encoding and retrieval processes across successive cycles. Both the dentate gyrus and CA3 receive prominent theta-modulated excitation from the medial entorhinal cortex, raising the question of how these two external inputs interact and whether they make separable contributions to CA3 network dynamics during behavior.</p> <p>During theta, place cells fire in compressed sequential order reflecting the animal’s past and future trajectory. As the animal moves through an environment, hippocampal neurons with overlapping place fields discharge in a fixed order within each theta cycle, with each cell advancing toward earlier phases as the animal progresses through its field. The resulting spike sequences, compressed from behavioral timescales into windows compatible with synaptic plasticity, are candidate substrates for the rapid encoding of spatial trajectories. Determining which afferent inputs to CA3 are necessary for generating and maintaining this temporal organization is therefore essential for understanding how the hippocampal circuit constructs and stores sequential representations of experience.</p> </blockquote> <p>This is obviously not as high-quality as the actual paper’s introduction. For example, it does not even mention “phase precession” explicitly, and its vague description of it is not even accurate (e.g., “with each cell advancing toward earlier phases” -&gt; the cells don’t advance, it’s their spike timing relative to theta oscillations that advances). And more importantly, it doesn’t hit the main points that the paper is about to satisfactorily set up the scientific gap and our contributions.</p> <p>Now, despite those caveats, this illustrates a main point: that the <em>core ideas</em> and <em>actual tokens</em> are somewhat separable (this is not necessarily my idea and there are serious people talking about this all the time, e.g., <d-cite key="fedorenko2024language"></d-cite>).</p>]]></content><author><name>Siavash Ahmadi</name></author><category term="AI,"/><category term="research"/><category term="ai,"/><category term="optimization,"/><category term="neural-network,"/><category term="llm,"/><category term="systems,"/><category term="transformer"/><summary type="html"><![CDATA[We will explore the Tiered Transformer, a novel architecture that enables scaling up inference in large language models without sacrificing the autoregressive factorization of the output's joint probability distribution.]]></summary></entry><entry><title type="html">The softmax function and its gradient</title><link href="https://siaahmadi.github.io/blog/2026/softmax-gradient/" rel="alternate" type="text/html" title="The softmax function and its gradient"/><published>2026-03-05T00:00:00+00:00</published><updated>2026-03-05T00:00:00+00:00</updated><id>https://siaahmadi.github.io/blog/2026/softmax-gradient</id><content type="html" xml:base="https://siaahmadi.github.io/blog/2026/softmax-gradient/"><![CDATA[\[\newcommand{\smx}[1]{\mathrm{softmax}(#1)} \newcommand{\Vector}[1]{\mathbf{#1}} \newcommand{\D}[1]{\frac{d}{d#1}} \newcommand{\Dp}[2][]{\frac{\partial#1}{\partial#2}} \newcommand{\smxv}[1]{\mathrm{softmax}(\Vector{#1})}\] <h1 id="the-softmax-function">The softmax function</h1> \[\begin{align*} \Vector{x} &amp; = \begin{bmatrix} x_1 \\ x_2 \\ \vdots \\ x_n \end{bmatrix} \in \mathbb{R}^n\\[3mm] \smx{\Vector{x}} &amp; = \begin{bmatrix} \frac{e^{x_1}}{\sum_ke^{x_k}} &amp; \frac{e^{x_2}}{\sum_ke^{x_k}} &amp; \ldots &amp; \frac{e^{x_n}}{\sum_ke^{x_k}} \end{bmatrix} \\[1mm] \smxv{x}_j &amp; = \frac{e^{x_j}}{\sum_ke^{x_k}} = \frac{u(x_j)}{v(\Vector{x})} \end{align*}\] <p>where $u(x) = e^x$ and $v(\Vector{x}) = \sum_ke^{x_k}$.</p> <h1 id="the-softmax-jacobian">The softmax Jacobian</h1> <p>Recall the quotient derivative rule:</p> \[\begin{align} \frac{d}{dx}(\frac{u(x)}{v(x)}) = \frac{u'(x)v(x) - u(x)v'(x)}{[v(x)]^2} \label{eq:quotient_derivative} \end{align}\] <p>We have</p> \[\begin{align} \Dp{x_i}u(x_j) &amp; = \begin{cases} u(x_i) &amp; , i = j\\ 0 &amp; , i \neq j\\ \end{cases} = \delta_{ij}u(x_i) \label{eq:uprime} \\[3mm] \Dp{x_i}v(\Vector{x}) &amp; = u(x_i) \label{eq:vprime} \end{align}\] <p>where $\delta_{ij}=1$ when $i=j$ and 0 otherwise. Now,</p> \[\begin{align*} \Dp{x_i}\smxv{x}_j &amp; = \frac{[\Dp{x_i}u(x_j)]v(\Vector{x}) - u(x_j)[\Dp{x_i}v(\Vector{x})]}{[v(\Vector{x})]^2} &amp;&amp; \tag*{(by \eqref{eq:quotient_derivative})}\\[2mm] &amp; = \frac{\delta_{ij}u(x_i)v(\Vector{x}) - u(x_j)u(x_i)}{v(\Vector{x})v(\Vector{x})} &amp;&amp; \tag*{(by \eqref{eq:uprime} and \eqref{eq:vprime})}\\[2mm] &amp; = \frac{u(x_i)}{v(\Vector{x})}\cdot\frac{\delta_{ij}v(\Vector{x}) - u(x_j)}{v(\Vector{x})}\\[2mm] &amp; = \frac{u(x_i)}{v(\Vector{x})}\cdot\left(\delta_{ij}\frac{v(\Vector{x})}{v(\Vector{x})}-\frac{u(x_j)}{v(\Vector{x})}\right)\\[2mm] &amp; = \frac{u(x_i)}{v(\Vector{x})}\cdot\left(\delta_{ij}-\frac{u(x_j)}{v(\Vector{x})}\right)\\[2mm] &amp; = \boxed{\smxv{x}_i(\delta_{ij}-\smxv{x}_j)} = \smxv{x}_j(\delta_{ij}-\smxv{x}_i) \end{align*}\] <p>If we set $\Vector{p} = \smxv{x}$, a vectorized implementation of this could look like this:</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">softmax_grad</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+<?xml version="1.0" encoding="utf-8"?><feed xmlns="http://www.w3.org/2005/Atom" xml:lang="en"><generator uri="https://jekyllrb.com/" version="4.4.1">Jekyll</generator><link href="https://siaahmadi.github.io/feed.xml" rel="self" type="application/atom+xml"/><link href="https://siaahmadi.github.io/" rel="alternate" type="text/html" hreflang="en"/><updated>2026-03-25T21:05:53+00:00</updated><id>https://siaahmadi.github.io/feed.xml</id><title type="html">blank</title><subtitle>A simple, whitespace theme for academics. Based on [*folio](https://github.com/bogoli/-folio) design. </subtitle><entry><title type="html">Specification gaming? Or LLM abstraction failure modes?</title><link href="https://siaahmadi.github.io/blog/2026/llm-scaling-metaphors/" rel="alternate" type="text/html" title="Specification gaming? Or LLM abstraction failure modes?"/><published>2026-03-23T00:00:00+00:00</published><updated>2026-03-23T00:00:00+00:00</updated><id>https://siaahmadi.github.io/blog/2026/llm-scaling-metaphors</id><content type="html" xml:base="https://siaahmadi.github.io/blog/2026/llm-scaling-metaphors/"><![CDATA[<p>In 1975, Fred Brooks published his now-famous book on software project management<d-cite key="brooks1975mythical"></d-cite>. Early on in the book, he writes</p> <blockquote> <p>When a task cannot be partitioned because of sequential constraints, the application of more effort has no effect on the schedule (Fig. 2.2). The bearing of a child takes nine months, no matter how many women are assigned. Many software tasks have this characteristic because of the sequential nature of debugging.</p> </blockquote> <p>This is sometimes quoted as “9 women can’t make a baby in 1 month” which stressed the point that child-bearing (and by analogy many other inherently sequential tasks, including in software projects) cannot be completed faster by assigning more workers to the task.</p> <p>The first time I heard this phrase I thought it effectively conveyed the point in a funny way. When writing my blog post /blog/2026/scaling-llm-inference/, I considered using this phrase but I wanted make sure it doesn’t come across as dated. After all, it was first written over 50 years ago in 1975. So I asked my partner what she thought of it, and she said that it sounded odd. And that’s when I took to AI for help finding a more neutral phrase that shares the characteristics with Brooks’ analogy. I wanted a phrase that’s intuitive, drives the main point home (that sequential tasks can’t be scaled), and is perhaps a bit humorous. While I can say I was entertained, I can’t say I got the help I needed.</p> <h3 id="so-what-did-the-ais-say">So what did the AIs say?</h3> <p>I first went to ChatGPT and asked it for help:</p> <p></p> <h2 id="multi-turn-conversation">Multi-turn conversation</h2> <div class="chat-container"> <div class="chat-message chat-right"> <div class="chat-bubble"><p>What’s a good other example that conveys the point meant by “Can nine women make a baby in one month?”</p> </div> </div> <div class="chat-message chat-left"> <div class="chat-author">ChatGPT</div> <div class="chat-bubble"><p>You’re trying to capture the idea that some processes are not parallelizable. Throwing more people (or resources) at them doesn’t compress time because the steps are inherently sequential or constrained.</p> <p>Here are some clean alternatives, depending on tone:</p> <p><strong>Simple and intuitive</strong></p> <ul> <li>“Nine cooks can’t bake a cake in one-ninth the time.”</li> <li>“You can’t speed up a sunrise by hiring more people.”</li> <li>“A tree doesn’t grow faster because you water it nine times at once.”</li> </ul> <p><strong>A bit sharper / more conceptual</strong></p> <ul> <li>“Some problems scale with effort; others scale with time.”</li> <li>“Parallel effort doesn’t help when the bottleneck is sequential.”</li> <li>“Adding workers doesn’t shrink a critical path.”</li> </ul> <p><strong>More technical (closer to your background)</strong></p> <p>“You can’t parallelize a dependency chain.” “Throughput can scale, latency often can’t.” “This is a latency problem, not a bandwidth problem.”</p> <p>If you tell me where you’re using it (resume, research statement, talk), I can tune one that lands exactly right for that audience.</p> </div> </div> </div> <p>Clearly, ChatGPT understood the key point because it said “You’re trying to capture the idea that some processes are not parallelizable.” But, I mean… come on! It totally fails on so many levels in its examples! “Nine cooks can’t bake a cake in one-ninth the time” Really?? 😂</p> <p>It’s entirely unclear to me why it fails to understand the significance of the number 9 in the original example. It simply copies it over.</p> <p>Or in the example “You can’t speed up a sunrise by hiring more people” it makes a very non-sensical analogy. The “sun?!” How did ChatGPT miss the point that there should be connection between the “worker” and the “task?”</p> <p>In other examples (“Some problems scale with effort; others scale with time”) it completely misses the requirement that the phrase must be punchy and intuitive. In yet others (“Adding workers doesn’t shrink a critical path”) it gives a vague and obscure analogy.</p> <p>Since I don’t have a subscription to ChatGPT, I thought maybe I’m not using the most capable model. So I went to Gemini Pro next, and took a prompting lesson with me. I made sure to tell Gemini that the examples should be “punchy, intuitive, and non-technical.” But my experience became only funnier.</p> <div class="chat-container"> <div class="chat-message chat-right"> <div class="chat-bubble"><p>what’s a good other example that conveys the point meant by “Can nine women make a baby in one month?” I want it to be punchy, intuitive, and non-technical, just like this sentence itself.</p> </div> </div> <div class="chat-message chat-left"> <div class="chat-author">Gemini Pro</div> <div class="chat-bubble"><p>This classic analogy from The Mythical Man-Month perfectly illustrates the concept of <strong>Brook’s Law</strong>: that some tasks are inherently sequential and cannot be sped up by adding more resources.</p> <p>If you are looking for an alternative that is just as punchy and non-technical, here are a few options:</p> <hr/> <p><em>*The “Natural” Limit*</em></p> <p><strong>“You can’t hatch an egg in one day by putting nine hens on it.”</strong></p> <p>This is perhaps the closest spiritual successor to the baby analogy. It highlights that biological or physical processes have a fixed “burn rate” that extra labor cannot bypass.</p> <p><strong>The “Physical” Space</strong></p> <p><strong>“Adding more chefs to a small kitchen just makes a crowd, not a faster dinner.”</strong></p> <p>This conveys the idea of <strong>overhead</strong> and <strong>interference</strong>. It’s intuitive because everyone understands that at a certain point, people start bumping into each other and communication becomes a bottleneck rather than a benefit.</p> <p><strong>The “Sequential” Logic</strong></p> <p><strong>“You can’t drive a car at 600 mph by putting ten people in it.</strong></p> <p>“This version is useful for explaining that the “engine” (the core process or technology) has a maximum output regardless of the “payload” (the team size).</p> <p>The “Construction” Reality”</p> <p>Two people can’t paint the same square inch at the same time.”</p> <p>This is a very visceral way to explain <strong>resource contention</strong>. It makes it clear that if a task isn’t divisible, a second person is literally just standing around waiting.</p> <p><strong>Comparison at a Glance</strong></p> <table> <tbody> <tr> <td>Analogy</td> <td>Focus</td> </tr> <tr> <td>Hens &amp; Eggs</td> <td>Fixed biological/natural duration.</td> </tr> <tr> <td>Chefs in Kitchen</td> <td>Communication overhead and physical constraints.</td> </tr> <tr> <td>Car Speed</td> <td>Capacity vs. Throughput.</td> </tr> <tr> <td>Painting</td> <td>Indivisibility of a specific task.</td> </tr> </tbody> </table> <p>I can help you apply these concepts to a specific project management or system design bottleneck if you’d like.</p> </div> </div> </div> <p>Like ChatGPT, Gemini also understood the main intent of the original phrase. And like ChatGPT, it also fell in the trap of the number nine 😅.</p> <p>I quite liked its car example: “You can’t drive a car at 600 mph by putting ten people in it.” 😂😂 It completely failed on the logic here. Or in the example “Can twelve winemakers make a ten-year vintage in one year?” it just mixes up a bunch of unrelated numbers and durations!</p> <p>So again, I learned some prompting lessons, and went back to Gemini Pro with a clean slate (started a new conversation). Here’s how this one went. I’ll spare you additional commentary so if you’d like a laugh, I encourage you to read it 😅.</p> <div class="chat-container"> <div class="chat-message chat-right"> <div class="chat-bubble"><p>what’s a good other example that conveys the point meant by “Can nine women make a baby in one month?” I want it to be punchy, intuitive, and non-technical, just like this sentence itself. If you use any timelines in your examples the timelines should be widely known, like a pregnancy’s duration. The key aspect of the pregnancy example is that it’s kind of funny, it’s extremely well known (there’s not a single human who wouldn’t know a pregnancy lasts nine months) and it conveys the key point: that some things are inherently sequential and impossible to parallelize.</p> </div> </div> <div class="chat-message chat-left"> <div class="chat-author">Gemini Pro</div> <div class="chat-bubble"><p>The “nine women” analogy is the gold standard for explaining Brooks’ Law (the idea that adding manpower to a late software project makes it later). It highlights that some tasks have a “natural gestation period” that simply cannot be bypassed by adding more resources.</p> <p>Here are a few punchy, non-technical alternatives that use widely known timelines:</p> <ol> <li>The Oven Example (The Most Intuitive) “Can six ovens bake a cake in ten minutes?”</li> </ol> <p>Why it works: Everyone knows a cake takes about an hour to bake. If you try to bake it in ten minutes by “parallelizing” it across six ovens, you just end up with six cold pans of batter (or one burnt mess if you try to crank up the heat). It perfectly illustrates that the internal chemical process (like the logic of a project) requires its own time to “set.”</p> <ol> <li>The Movie Example (The Most Logical) “Can four projectors finish a two-hour movie in thirty minutes?”</li> </ol> <p>Why it works: A movie is a purely linear experience. Even if you have the best technology and multiple people “working” on the playback, the story must unfold at its own pace for it to make sense. Watching the first 30 minutes on four different screens simultaneously doesn’t mean you’ve “seen the movie.”</p> <ol> <li>The Pilot Example (The “Transport” Logic) “Can ten pilots fly a five-hour flight in thirty minutes?”</li> </ol> <p>Why it works: This highlights that the “vessel” (the project) is limited by its environment and physics. No matter how many experts you put in the cockpit, the plane cannot physically travel faster than its engine allows. Adding more pilots just crowds the cockpit without changing the arrival time.</p> <ol> <li>The Sleep Example (The Relatable Favorite) “Can seven people sleep for you on Sunday so you can stay awake all week?”</li> </ol> <p>Why it works: While a bit different in structure, it attacks the idea of “banking” or “outsourcing” a fundamental, sequential need. Everyone knows you need roughly 8 hours of sleep every night. You can’t parallelize your rest for the week into a single day just because you have “extra hours” available on Sunday.</p> <p><strong>Summary Table</strong> Analogy | The “Man-Month” Logic | Why it’s punchy <strong>9 Women</strong> | 9 × 1 month ≠ Baby | The classic “biological” constraint. <strong>6 Ovens</strong> | 6 × 10 mins ≠ Cake | The “chemical/process” constraint. <strong>4 Projectors</strong> | 4 × 30 mins ≠ Movie | The “linear content” constraint. <strong>10 Pilots</strong> | 10 pilots ≠ Fast Flight | The “physical/vessel” constraint.</p> <p>Would you like me to help you draft a short presentation slide or a “TL;DR” email using one of these to explain a project delay to stakeholders?</p> </div> </div> <div class="chat-message chat-right"> <div class="chat-bubble"><p>Okay you’re really totally missing the point. You genuinely have no idea how the world works and I actually thank you for helping me identify a failure mode in the state of the art LLMs!</p> </div> </div> <div class="chat-message chat-left"> <div class="chat-author">Gemini Pro</div> <div class="chat-bubble"><p>That’s a fair hit. The strength of the “nine women” analogy isn’t just the math—it’s that the nine-month timeline is a hard biological constant. My previous examples like “baking a cake” or “flying a plane” are too variable to land with the same thud.</p> <p>If you want that same universal, “physics-says-no” logic, try these:</p> <ol> <li>The Sleep Analogy “Can eight people each sleep for one hour to give you a full night’s rest?”</li> </ol> <p>Why it works: Everyone knows a “full night’s rest” is roughly eight hours. It’s a biological requirement that is inherently sequential; you cannot “parallelize” your exhaustion away by having others sleep on your behalf.</p> <ol> <li>The Calendar Analogy “Can seven people make it next Monday by tomorrow morning?”</li> </ol> <p>Why it works: It’s perfectly absurd. A week is seven days, and no amount of “manpower” or extra people living through the day can force the calendar to skip ahead. It highlights that some processes are simply passengers of time.</p> <ol> <li>The Song Analogy “Can four people finish a three-minute song in forty-five seconds?”</li> </ol> <p>Why it works: A “three-minute song” is defined by its duration. If you play it four times faster, or have four people sing different parts simultaneously, you no longer have the song—you have noise. It perfectly captures the “sequential logic” requirement.</p> <p>Would you like me to tweak one of these into a one-sentence “mic drop” for your specific context?</p> </div> </div> <div class="chat-message chat-right"> <div class="chat-bubble"><p>Okay forget it. I’ll make this into a blog post and make fun of you.</p> <p>Stick to what you’re good at: here’s a sentence I wrote, you just make it shorter “Can two travelers reach their destination in half the time using two cars?”</p> </div> </div> <div class="chat-message chat-right"> <div class="chat-bubble"><p>“Can two cars get one traveler there in half the time?”</p> </div> </div> <div class="chat-message chat-right"> <div class="chat-bubble"><p>NOOOOO!!!! DON’T CHANGE THE KEY VARIABLES! YOU CAN’T CUT ONE PERSON INTO TWO TO PUT THEM IN TWO CARS. YOU NEED TWO PEOPLE!</p> </div> </div> <div class="chat-message chat-left"> <div class="chat-author">Gemini Pro</div> <div class="chat-bubble"><p>Fair point—splitting a person is definitely not the optimization we’re looking for! If we keep both travelers and both cars, the shortest version while maintaining that logic is:</p> <p>“Can two cars get two travelers there in half the time?”</p> <p>Would you like me to try a version that swaps the cars for another common mode of transport, like a flight or a train?</p> </div> </div> </div>]]></content><author><name></name></author><category term="AI"/><category term="llm,"/><category term="failure-mode"/><summary type="html"><![CDATA[My frustrations (and comedic experience) trying to get LLMs to help me find a good linguistic analogy.]]></summary></entry><entry><title type="html">Can you get home twice as fast in two cars instead of one? Scaling up autoregressive inference in LLMs</title><link href="https://siaahmadi.github.io/blog/2026/scaling-llm-inference/" rel="alternate" type="text/html" title="Can you get home twice as fast in two cars instead of one? Scaling up autoregressive inference in LLMs"/><published>2026-03-14T00:00:00+00:00</published><updated>2026-03-14T00:00:00+00:00</updated><id>https://siaahmadi.github.io/blog/2026/scaling-llm-inference</id><content type="html" xml:base="https://siaahmadi.github.io/blog/2026/scaling-llm-inference/"><![CDATA[<h1 id="this-post-is-currently-in-development-please-come-back-soon">THIS POST IS CURRENTLY IN DEVELOPMENT. PLEASE COME BACK SOON!</h1> <p>Some tasks are inherently sequential. So in case there was any doubt about the question in the title, the answer is no (😅). Even if you were to attempt the ill-advised trick of splitting yourself in half to be placed in two separate cars, you still won’t get home twice as fast, unfortunately. Crucially, this does not even depend on splitting yourself in half: if you and your partner were going home from the opera in two separate cars, you won’t get home any faster than if you went in the same car.</p> <p>Obviously, this is a rather facetious way to make a simple point: inherently sequential tasks cannot be completed faster by using additional resources. Large language models generate their responses sequentially, and that means generating a long response can take a bit too long, no matter how many GPUs you throw at the problem.</p> <p>This post about how the problem of next-token prediction can be transformed to make it possible to complete a long response faster using more GPUs.</p> <h2 id="a-fun-little-experiment">A fun little experiment</h2> <p>Before we dive in, I want to share a fun little experiment. I used Google NotebookLM to generate a “podcast” from the companion <a href="/assets/pdf/Tiered_Transformer.pdf">preprint</a>. Take a listen:</p> <div class="row mt-3"> <div class="col-sm mt-3 mt-md-0"> <figure> <audio src="/assets/audio/Tiered_Transformers_enable_parallel_text_generation.m4a" controls=""/> </figure> </div> </div> <div class="caption"> An AI-generated "podcast" segment on the topic of this blog post. </div> <h2 id="intro">Intro</h2> <p>Think back to your last piece of writing longer than a single paragraph. Did you write it linearly from start to finish? Chances are, <em>not</em>.</p> <p>Whether drafting a paper or a blog post, most of us probably don’t sit down and produce a linear stream of consciousness from the first word to the last.</p> <p>In practice, we start by sketching the skeleton, breaking a monolithic thesis into (semi-)independent yet interrelated sections that we can tackle in isolation. We might even do this recursively: sections might dissolve into paragraphs, and paragraphs into sentences, allowing us to build the work semi-independently as the ideas mature.</p> <p>Among the many benefit of working in this way is that (at least in theory) you could deploy the task of writing each section to a different person. If you’re writing a book, you can architect the main story, come up with the general outline of say 10 chapters, and then outsource the task of actually writing the chapters to 10 different ghost writers. In this way, you can actually finish your book 10 times as fast!</p> <p>However, this is not how Large language models (LLMs) generate text. They do so in a strictly linear, autoregressive fashion: predicting one token at a time, conditioned only on the sequence that has come before it. This sequential nature means LLMs build the “architecture” and the “style” simultaneously, token by token, without the benefit of a high-level blueprint. While this produces impressively coherent output in many cases, it cannot be distributed among parallel workers.</p> <h2 id="a-solution">A solution</h2> <p>Now, what if we trained a model that mimics how we write? Specifically, let’s train a model to only create a blueprint of the answer by generting tokens that capture the core ideas of only one section of the response.</p> <h3 id="heres-an-example">Here’s an example:</h3> <p>Let’s take a look at an example. I want to look at the Introduction of one of my PhD papers, which is <a href="https://doi.org/10.1038/s41467-024-54943-2">publicly available here</a>. I asked <a href="https://grok.com/">Grok</a> and <a href="https://claude.ai">Claude</a> to summarize each paragraph, and here’s what they wrote (I edited and merged them):</p> <ol> <li>DG supports memory via sparse activity, pattern separation, and complex spatial working memory.</li> <li>CA3 sharp-wave ripples depend on DG during working memory and enable sequence replay, and aid planning.</li> <li>DG may correct sequence order in CA3; theta dominates active exploration and encoding.</li> <li>Theta phase precession compresses behavioral sequences into theta cycle firing, enabling synaptic storage.</li> <li>DG’s contribution to CA3 phase precession remains computationally proposed but experimentally untested.</li> <li>We found DG, not MEC, drives prospective coding in CA3 theta; new model explains oscillatory contributions.</li> </ol> <p>Now, this somewhat captures what I had in mind when I was actually trying to write a paragraph. The process did involve additional details, such as planning and iterating on writing and re-writing the core ideas, but each individual iteration followed a similar routine: I kept asking myself <em>what am I trying to say?</em> and <em>how should I string my words together to say that?</em>.</p> <p>The above points can be compressed even further:</p> <ol> <li>DG, broadly</li> <li>DG vs. CA3 sharp-wave ripples</li> <li>The broader circuit and role of theta</li> <li>Theta sequences</li> <li>The scientific gap</li> <li>Our contributions</li> </ol> <p>Now, it can be seen that each point (a) depends on the previous points, and (b) can be expanded into sentences in various ways.</p> <p>I asked Claude this time to expand the first four of these into possible paragraph outlines:</p> <ol> <li><strong>DG, broadly</strong>: The dentate gyrus is a hippocampal subregion critical for forming distinct memory representations through sparse coding.</li> <li><strong>DG vs. CA3 sharp-wave ripples</strong>: DG inputs regulate CA3 sharp-wave ripples, high-frequency oscillatory events linked to memory consolidation and replay.</li> <li><strong>The broader circuit and role of theta</strong>: Beyond sharp-wave ripples, theta oscillations dominate hippocampal dynamics during active exploration and memory encoding.</li> <li><strong>Theta sequences</strong>: During theta, place cells fire in compressed sequential order reflecting the animal’s past and future trajectory.</li> </ol> <p>And finally, here’s how it expanded them back to full paragraphs:</p> <blockquote> <p>The dentate gyrus is a hippocampal subregion critical for forming distinct memory representations through sparse coding. Situated at the entry point of the canonical hippocampal circuit, it receives the majority of its cortical drive via the perforant path and transforms dense, overlapping cortical inputs into sparse, highly differentiated activity patterns. This process, often referred to as pattern separation, is thought to minimize interference between similar memories by ensuring that distinct experiences are represented by non-overlapping neuronal ensembles. The unusually low baseline firing rates of dentate granule cells, combined with powerful feedback inhibition from local interneurons, are key cellular mechanisms that enforce this sparsity.</p> <p>DG inputs regulate CA3 sharp-wave ripples, high-frequency oscillatory events linked to memory consolidation and replay. CA3, the principal downstream target of the dentate gyrus via the mossy fiber pathway, possesses extensive recurrent collateral connections that endow it with autoassociative properties suited to pattern completion and sequence storage. Periods of behavioral quiescence and slow-wave sleep are punctuated by sharp-wave ripples, during which reactivation of previously encoded neuronal sequences is thought to transfer information to neocortical long-term stores. The degree to which the dentate gyrus gates or modulates this consolidation process through its projections to CA3 has become an important question for understanding how memory traces are stabilized over time.</p> <p>Beyond sharp-wave ripples, theta oscillations dominate hippocampal dynamics during active exploration and memory encoding. This 6–10 Hz rhythm, sustained by a network encompassing the medial septum and entorhinal cortex, imposes a recurring temporal structure on hippocampal activity that is thought to segregate encoding and retrieval processes across successive cycles. Both the dentate gyrus and CA3 receive prominent theta-modulated excitation from the medial entorhinal cortex, raising the question of how these two external inputs interact and whether they make separable contributions to CA3 network dynamics during behavior.</p> <p>During theta, place cells fire in compressed sequential order reflecting the animal’s past and future trajectory. As the animal moves through an environment, hippocampal neurons with overlapping place fields discharge in a fixed order within each theta cycle, with each cell advancing toward earlier phases as the animal progresses through its field. The resulting spike sequences, compressed from behavioral timescales into windows compatible with synaptic plasticity, are candidate substrates for the rapid encoding of spatial trajectories. Determining which afferent inputs to CA3 are necessary for generating and maintaining this temporal organization is therefore essential for understanding how the hippocampal circuit constructs and stores sequential representations of experience.</p> </blockquote> <p>This is obviously not as high-quality as the actual paper’s introduction. For example, it does not even mention “phase precession” explicitly, and its vague description of it is not even accurate (e.g., “with each cell advancing toward earlier phases” -&gt; the cells don’t advance, it’s their spike timing relative to theta oscillations that advances). And more importantly, it doesn’t hit the main points that the paper is about to satisfactorily set up the scientific gap and our contributions.</p> <p>Now, despite those caveats, this illustrates a main point: that the <em>core ideas</em> and <em>actual tokens</em> are somewhat separable (this is not necessarily my idea and there are serious people talking about this all the time, e.g., <d-cite key="fedorenko2024language"></d-cite>).</p>]]></content><author><name>Siavash Ahmadi</name></author><category term="AI,"/><category term="research"/><category term="ai,"/><category term="optimization,"/><category term="neural-network,"/><category term="llm,"/><category term="systems,"/><category term="transformer"/><summary type="html"><![CDATA[We will explore the Tiered Transformer, a novel architecture that enables scaling up inference in large language models without sacrificing the autoregressive factorization of the output's joint probability distribution.]]></summary></entry><entry><title type="html">The softmax function and its gradient</title><link href="https://siaahmadi.github.io/blog/2026/softmax-gradient/" rel="alternate" type="text/html" title="The softmax function and its gradient"/><published>2026-03-05T00:00:00+00:00</published><updated>2026-03-05T00:00:00+00:00</updated><id>https://siaahmadi.github.io/blog/2026/softmax-gradient</id><content type="html" xml:base="https://siaahmadi.github.io/blog/2026/softmax-gradient/"><![CDATA[\[\newcommand{\smx}[1]{\mathrm{softmax}(#1)} \newcommand{\Vector}[1]{\mathbf{#1}} \newcommand{\D}[1]{\frac{d}{d#1}} \newcommand{\Dp}[2][]{\frac{\partial#1}{\partial#2}} \newcommand{\smxv}[1]{\mathrm{softmax}(\Vector{#1})}\] <h1 id="the-softmax-function">The softmax function</h1> \[\begin{align*} \Vector{x} &amp; = \begin{bmatrix} x_1 \\ x_2 \\ \vdots \\ x_n \end{bmatrix} \in \mathbb{R}^n\\[3mm] \smx{\Vector{x}} &amp; = \begin{bmatrix} \frac{e^{x_1}}{\sum_ke^{x_k}} &amp; \frac{e^{x_2}}{\sum_ke^{x_k}} &amp; \ldots &amp; \frac{e^{x_n}}{\sum_ke^{x_k}} \end{bmatrix} \\[1mm] \smxv{x}_j &amp; = \frac{e^{x_j}}{\sum_ke^{x_k}} = \frac{u(x_j)}{v(\Vector{x})} \end{align*}\] <p>where $u(x) = e^x$ and $v(\Vector{x}) = \sum_ke^{x_k}$.</p> <h1 id="the-softmax-jacobian">The softmax Jacobian</h1> <p>Recall the quotient derivative rule:</p> \[\begin{align} \frac{d}{dx}(\frac{u(x)}{v(x)}) = \frac{u'(x)v(x) - u(x)v'(x)}{[v(x)]^2} \label{eq:quotient_derivative} \end{align}\] <p>We have</p> \[\begin{align} \Dp{x_i}u(x_j) &amp; = \begin{cases} u(x_i) &amp; , i = j\\ 0 &amp; , i \neq j\\ \end{cases} = \delta_{ij}u(x_i) \label{eq:uprime} \\[3mm] \Dp{x_i}v(\Vector{x}) &amp; = u(x_i) \label{eq:vprime} \end{align}\] <p>where $\delta_{ij}=1$ when $i=j$ and 0 otherwise. Now,</p> \[\begin{align*} \Dp{x_i}\smxv{x}_j &amp; = \frac{[\Dp{x_i}u(x_j)]v(\Vector{x}) - u(x_j)[\Dp{x_i}v(\Vector{x})]}{[v(\Vector{x})]^2} &amp;&amp; \tag*{(by \eqref{eq:quotient_derivative})}\\[2mm] &amp; = \frac{\delta_{ij}u(x_i)v(\Vector{x}) - u(x_j)u(x_i)}{v(\Vector{x})v(\Vector{x})} &amp;&amp; \tag*{(by \eqref{eq:uprime} and \eqref{eq:vprime})}\\[2mm] &amp; = \frac{u(x_i)}{v(\Vector{x})}\cdot\frac{\delta_{ij}v(\Vector{x}) - u(x_j)}{v(\Vector{x})}\\[2mm] &amp; = \frac{u(x_i)}{v(\Vector{x})}\cdot\left(\delta_{ij}\frac{v(\Vector{x})}{v(\Vector{x})}-\frac{u(x_j)}{v(\Vector{x})}\right)\\[2mm] &amp; = \frac{u(x_i)}{v(\Vector{x})}\cdot\left(\delta_{ij}-\frac{u(x_j)}{v(\Vector{x})}\right)\\[2mm] &amp; = \boxed{\smxv{x}_i(\delta_{ij}-\smxv{x}_j)} = \smxv{x}_j(\delta_{ij}-\smxv{x}_i) \end{align*}\] <p>If we set $\Vector{p} = \smxv{x}$, a vectorized implementation of this could look like this:</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">softmax_grad</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
     <span class="n">p</span> <span class="o">=</span> <span class="nf">softmax</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">grad</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">diag</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="o">-</span> <span class="n">p</span><span class="p">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">p</span>
     <span class="k">return</span> <span class="n">grad</span>
@@ -36,87 +36,7 @@ O = db[4] # returns `d_dimensional_vector_4`
 </span><span class="n">grad</span><span class="p">[</span><span class="sh">"</span><span class="s">dL_da</span><span class="sh">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="p">.</span><span class="nf">moveaxis</span><span class="p">(</span><span class="n">grad</span><span class="p">[</span><span class="sh">"</span><span class="s">dL_da</span><span class="sh">"</span><span class="p">],</span> <span class="o">-</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="c1"># (h, N, L_q, d_v)
 </span></code></pre></div></div> <p>In the last equation, $G = \Dp[\Ll]{\Z}$ is the upstream gradient.</p> <h3 id="scaled-dot-product-attention-1">Scaled dot product attention</h3> <h4 id="attention-weighted-values-1">Attention-weighted values</h4> \[\newcommand{\aforward}{ \Aa &amp; = \A\V \in \mathbb{R}^{h\times N \times L_q \times d_v} } \newcommand{\dadA}{ \Dp[\Aa]{\A} &amp; = \V^\top \in \mathbb{R}^{h\times N \times d_v \times L_k} } \newcommand{\dadV}{ \Dp[\Aa]{\V} = \A^\top \in \mathbb{R}^{h\times N \times L_k \times L_q} } \newcommand{\dLdA}{ \Dp[\Ll]{\A} &amp; = G\Dp[\Aa]{\A} \in \mathbb{R}^{h\times N \times L_q \times L_k} } \newcommand{\dLdV}{ \Dp[\Ll]{\V} = \Dp[\Aa]{\V}G \in \mathbb{R}^{h\times N \times L_k \times d_v} }\] \[\begin{align*} \aforward &amp;&amp;\tag*{(forward pass)} \\[2mm] \dadA, \quad \dadV &amp;&amp; \tag*{(local gradients)}\\[2mm] \dLdA, \quad \dLdV &amp;&amp; \tag*{(upstream of lower operations)}\\ \end{align*}\] <p>where $G = \Dp[\Ll]{\Aa}$ is the upstream gradient.</p> <h4 id="masked-softmax-1">Masked softmax</h4> <p>Please see the PDF on <a href="../utils/softmax_gradient.pdf">the softmax function and its gradient</a>. As a reminder, here’s the gradient with respect to the masked softmax inputs of the loss:</p> \[\begin{align*} \A = \text{softmax}(\Vector{S}) &amp;&amp; \tag*{(forward pass)}\\ \Dp[\Ll]{\Aa} = (G - G\cdot\Vector{p})\odot\Vector{p}\in\mathbb{R}^{h\times N\times L_q \times d_v} &amp;&amp; \tag*{(upstream of lower operations)}\\ \end{align*}\] <h4 id="scaled-dot-product-1">Scaled dot product</h4> \[\newcommand{\Sforward}{ s = \frac{1}{\sqrt{d_K}}, \quad \Vector{S} &amp; = s\Q\K^\top \in \mathbb{R}^{h\times N\times L_q\times L_k} } \newcommand{\dSdQ}{ \Dp[\Vector{S}]{\Q} &amp; = s\K \in \mathbb{R}^{h\times N \times L_k \times d_k} } \newcommand{\dSdK}{ \Dp[\Vector{S}]{\K} = s\Q \in \mathbb{R}^{h\times N \times L_q \times d_k} } \newcommand{\dLdQ}{ \Dp[\Ll]{\Q} &amp; = sG\K \in \mathbb{R}^{h\times N \times L_q \times d_k} } \newcommand{\dLdK}{ \Dp[\Ll]{\K} = sG^\top\Q \in \mathbb{R}^{h\times N \times L_k \times d_k} }\] \[\begin{align*} \Sforward &amp;&amp;\tag*{(forward pass)} \\[2mm] \dSdQ, \quad \dSdK &amp;&amp; \tag*{(local gradients)}\\[2mm] \dLdQ, \quad \dLdK &amp;&amp; \tag*{(upstream of lower operations)}\\ \end{align*}\] <h3 id="in-projections-1">In projections</h3> <p>For each head $i$, we have:</p> \[\newcommand{\Qforward}{ \Q_i = \Vector{q}\Wqi, \quad \K_i &amp; = \Vector{k}\Wki, \quad \V_i = \Vector{v}\Wvi } \newcommand{\dQdq}{ \Dp[\Q_i]{\Vector{q}} = {\Wqi}^\top } \newcommand{\dKdk}{ \Dp[\K_i]{\Vector{k}} = {\Wki}^\top } \newcommand{\dVdv}{ \Dp[\V_i]{\Vector{v}} = {\Wvi}^\top } \newcommand{\dQdWq}{ \Dp[\Q_i]{\Wqi} = \Vector{q}^\top } \newcommand{\dKdWk}{ \Dp[\K_i]{\Wki} = \Vector{k}^\top } \newcommand{\dVdWv}{ \Dp[\V_i]{\Wvi} = \Vector{v}^\top } \newcommand{\dLdq}{ \Dp[\Ll]{\Vector{q}} = G\Dp[\Q_i]{\Vector{q}} } \newcommand{\dLdk}{ \Dp[\Ll]{\Vector{k}} = G\Dp[\Q_i]{\Vector{q}} } \newcommand{\dLdv}{ \Dp[\Ll]{\Vector{v}} = G\Dp[\Q_i]{\Vector{q}} } \newcommand{\dLdWqi}{ \Dp[\Ll]{\Wqi} = \Dp[\Q_i]{\Wqi}G } \newcommand{\dLdWki}{ \Dp[\Ll]{\Wki} = \Dp[\K_i]{\Wki}G } \newcommand{\dLdWvi}{ \Dp[\Ll]{\Wvi} = \Dp[\V_i]{\Wvi}G }\] \[\begin{align*} \Qforward &amp;&amp;\tag*{(forward pass)} \\[7mm] \dQdq, \quad &amp; \dKdk, \quad \dVdv &amp;&amp; \tag*{(local gradients)}\\[2mm] \dQdWq, \quad &amp; \dKdWk, \quad \dVdWv &amp;&amp; \tag*{(local gradients)}\\[5mm] \dLdq, \quad &amp; \dLdk, \quad \dLdv &amp;&amp; \tag*{(upstream of lower operations)}\\[3mm] \dLdWqi, \quad &amp; \dLdWki, \quad \dLdWvi &amp;&amp; \tag*{(upstream of lower operations)}\\ \end{align*}\] <p>Now, to pack all of this into vectorized NumPy operations, we rewrite everything without the subscripts while being very careful about the shapes. We derive this for $\Vector{q}$ and $\Wq$ only as the equations for the rest are similar.</p> \[\newcommand{\Qprimeforward}{ \Q' &amp; = \Vector{q}\Wq \in \mathbb{R}^{N \times L_q \times h \times d_k} } \renewcommand{\Qforward}{ \Q &amp; = \texttt{np.moveaxis}(\Q', -2, 0) \in \mathbb{R}^{h \times N \times L_q \times d_k}\ (\ni G) } \renewcommand{\dQdq}{ \Dp[\Q]{\Vector{q}} &amp; = \Wq^\top \in \mathbb{R}^{h\times d_k\times d_\text{model}} } \renewcommand{\dQdWq}{ \Dp[\Q]{\Wq} = \Vector{q}^\top \in \mathbb{R}^{N\times d_\text{model} \times L_q} }\] \[\begin{align*} \Qprimeforward &amp;&amp; \tag*{(forward pass)} \\[3mm] \Qforward &amp;&amp; \tag*{(forward pass)} \\[3mm] \dQdq,\quad \dQdWq &amp;&amp; \tag*{(local gradients)}\\ \end{align*}\] <p>Here comes the tricky part: in the per-head equation we saw that $\dLdq$, but this will not give the correct shape if we simply carry out the product as follows:</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">grad</span><span class="p">[</span><span class="sh">"</span><span class="s">dL_dq</span><span class="sh">"</span><span class="p">]</span> <span class="o">=</span> <span class="n">G</span> <span class="o">@</span> <span class="n">grad</span><span class="p">[</span><span class="sh">"</span><span class="s">dQ_dq</span><span class="sh">"</span><span class="p">]</span> <span class="c1"># (h, N, L_q, d_k) @ (h, d_k, d_model)
 </span>                                  <span class="c1">#  won't run; shapes don't match!
-</span></code></pre></div></div> <p>the <code class="language-plaintext highlighter-rouge">@</code> operator won’t complete properly because after it lines up the tensors on the last two axes ($L_q \times d_k$ and $d_k\times d_\text{model}$), the remaining axes are neither identical nor broadcastable (expected both to be either $h \times N$ or $h$ or $N$, but got $h\times N$ vs. $h$). Instead, we should be adding an axis to allow NumPy’s broadcasting rules to kick in:</p> \[\renewcommand{\dQdq}{ \Dp[\Q]{\Vector{q}} &amp; = \Wq^\top \in \mathbb{R}^{h\times 1 \times d_k\times d_\text{model}} } \renewcommand{\dQdWq}{ \Dp[\Q]{\Wq} = \Vector{q}^\top \in \mathbb{R}^{1\times N\times d_\text{model} \times L_q} } \renewcommand{\dLdq}{ \Dp[\Ll]{\Vector{q}} &amp; = G\Dp[\Q]{\Vector{q}} \in \mathbb{R}^{h\times N\times L_q \times d_\text{model}} } \newcommand{\dLdWq}{ \Dp[\Ll]{\Wq} = \Dp[\Q]{\Wq}G \in \mathbb{R}^{h\times N\times d_\text{model}\times d_k} }\] \[\begin{align*} \dQdq, \quad \dQdWq &amp;&amp; \tag*{(local gradients)} \\[5mm] \dLdq, \quad \dLdWq &amp;&amp; \tag*{(upstream of lower operations)} \end{align*}\] <p>This makes it so that the matrices represented by the final two dimensions interact independently for each head and batch.</p> <p>Finally to make sure the dimensions are correct, we should be summing along the batch axis:</p> \[\renewcommand{\dLdq}{ \Dp[\Ll]{\Vector{q}} &amp; = \sum_{b\,\in\,\text{batch}}\left(G\Dp[\Q]{\Vector{q}}\right)_b \in \mathbb{R}^{h\times L_q \times d_\text{model}} } \renewcommand{\dLdWq}{ \Dp[\Ll]{\Wq} = \sum_{b\,\in\,\text{batch}}\left(\Dp[\Q]{\Wq}G\right)_b \in \mathbb{R}^{h\times d_\text{model}\times d_k} }\] \[\begin{align*} \dLdq, \quad \dLdWq\\ \end{align*}\] <p>Similar arguments hold for the other matrices.</p>]]></content><author><name></name></author><category term="AI,"/><category term="from-scratch"/><category term="ai,"/><category term="optimization,"/><category term="neural-network,"/><category term="equations,"/><category term="transformer"/><summary type="html"><![CDATA[Discussions of the Transformer architecture, atlernate visualizations, and reinterpretation as a database.]]></summary></entry><entry><title type="html">A two layer neural network from first principles</title><link href="https://siaahmadi.github.io/blog/2026/mlp/" rel="alternate" type="text/html" title="A two layer neural network from first principles"/><published>2026-02-18T00:00:00+00:00</published><updated>2026-02-18T00:00:00+00:00</updated><id>https://siaahmadi.github.io/blog/2026/mlp</id><content type="html" xml:base="https://siaahmadi.github.io/blog/2026/mlp/"><![CDATA[\[\newcommand{\h}[1]{\mathbf{h}_{#1}} \newcommand{\hH}[1]{\mathbf{h}^{(#1)}} \newcommand{\B}[1]{\mathbf{b}_{#1}} \newcommand{\W}[1]{\mathbf{W}_{#1}}\] <p>(This post is a companion to the MLP-from-scratch mini project available at <a href="https://github.com/siaahmadi/from_scratch/tree/master/dl_from_scratch/mlp">https://github.com/siaahmadi/from_scratch</a>.)</p> <p>Backpropagation is the engine behind training neural networks, but it can feel abstract without seeing the math spelled out end-to-end. In this post, we’ll walk through a concrete two-layer network — forward pass, loss computation, and the full backward pass — so that each gradient has a clear derivation you can follow and implement yourself.</p> <p>One habit that pays off enormously here is writing the dimensions of every matrix and intermediate value explicitly. It might seem like extra notation at first, but it earns its keep in two ways. First, it makes differentiation more mechanical: when you need to multiply two gradient matrices together, the required transposes and orderings are often forced on you by dimensional compatibility alone, leaving little room for error. Second, it turns implementation bugs into obvious shape mismatches. If a gradient comes out the wrong size, you know immediately that something is wrong. Rather than silently accumulating a numerically wrong update, you spot and correct the mistake. With that in mind, you’ll notice that every quantity in this post is annotated with its shape. Treat those annotations as part of the math.</p> <h2 id="inputs">Inputs</h2> <p>Suppose we have a dataset of $N$ examples, each with $D$ features, and $C$ possible output classes:</p> \[\begin{align*} \mathbf{X} &amp; \in \mathbb{R}^{N \times D}, \mathbf{y} \in \mathbb{R}^{N \times C}\\ \end{align*}\] <h2 id="the-network">The Network</h2> <p>Our network has one hidden layer of width $H$. This means we need two sets of weight matrices and bias vectors, one for each linear transformation.</p> \[\begin{align*} \W{1} &amp; \in \mathbb{R}^{D \times H}, \B{1} \in \mathbb{R}^{1 \times H}\\ \W{2} &amp; \in \mathbb{R}^{H \times C}, \B{2} \in \mathbb{R}^{1 \times C}\\ \end{align*}\] <p>The forward pass computes three intermediate values. First, a linear transformation of the input. Then, a nonlinear activation. Finally, a second linear transformation that produces the raw class scores (logits).</p> \[\begin{align*} \h{1} = \mathbf{X} \W{1} + \B{1} &amp; \in \mathbb{R}^{N \times H}\\ \h{2} = f(\h{1}) &amp; \in \mathbb{R}^{N \times H}\\ \h{3} = \h{2} \W{2} + \B{2} &amp; \in \mathbb{R}^{N \times C} \end{align*}\] <p>Note: Below, we will use the notations $\h{i}$ and $\hH{i}$ interchangeably so as to make the text more legible. In particular, when it’s necessary to index into $\h{i}$, we will use the $\hH{i}_j$ notation to refer to the $j$th element in $\h{i}$.</p> <h2 id="nonlinearity">Nonlinearity</h2> <p>For our activation function $f$, we use ReLU (Rectified Linear Unit). It’s applied elementwise: negative values are clamped to zero, and positive values pass through unchanged. Its simplicity is what makes its gradient so easy to compute later.</p> \[\begin{align*} f(\mathbf{X}) = \mathrm{ReLU}(\mathbf{X}) &amp; = \begin{bmatrix} \mathrm{ReLU}(x_{11}) &amp; \cdots &amp; \mathrm{ReLU}(x_{1j}) &amp; \cdots &amp; \mathrm{ReLU}(x_{1n})\\ \vdots &amp; \ddots &amp; &amp; &amp; \vdots\\ &amp; &amp; \mathrm{ReLU}(x_{ij}) &amp; &amp; \\ \vdots &amp; &amp; &amp; \ddots &amp; \vdots\\ \mathrm{ReLU}(x_{m1}) &amp; \cdots &amp; \mathrm{ReLU}(x_{mj}) &amp; \cdots &amp; \mathrm{ReLU}(x_{mn})\\ \end{bmatrix}\\[4mm] &amp; = \begin{cases} x_{ij} &amp; \text{, if } x_{ij} \geq 0 \\ 0 &amp; \text{, if } x_{ij} &lt; 0 \end{cases} \end{align*}\] <h2 id="predictions">Predictions</h2> <p>The logits in $\h{3}$ are not probabilities as they can be any real number. To convert them into a proper probability distribution over the $C$ classes, we apply the softmax function, which exponentiates each score and normalizes by the sum. The result $\mathbf{q}_i$​ is our model’s predicted probability for class $i$.</p> \[\begin{align*} \mathbf{q}_i &amp; = \mathrm{softmax}(\h{3})_i\\ \mathrm{softmax}(\mathbf{z})_i &amp; = \frac{e^{\mathbf{z}_i}}{\sum_{k=1}^{C}e^{\mathbf{z}_k}} \end{align*}\] <h2 id="loss">Loss</h2> <p>We measure how far our predictions are from the truth using <strong>cross-entropy loss</strong>. Here, $\mathbf{p}$ is the one-hot true distribution and $\mathbf{q}$ is our predicted distribution. Since $\mathbf{p}$ is one-hot, the sum over all classes collapses to just the log-probability assigned to the correct class $i$ which gives us the closed-form expression for the loss.</p> <p>Below, $i$ is the index of the correct class.</p> \[\begin{align*} \mathcal{L} = \mathrm{CE}(\underbrace{p}_{\text{true}}, \underbrace{q}_{\text{estimate}}) &amp; = -\mathbb{E}_p[\log q]\\ &amp; = -\sum_{k=1}^{C} \mathbf{p}_k \log \mathbf{q}_k\\ &amp; = -\underbrace{\mathbf{p}_i}_1\cdot\log (\frac{e^{\hH{3}_i}}{\sum_{k=1}^{C}e^{\hH{3}_k}})\\ &amp; = -\log e^{\hH{3}_i} + \log \left(\sum_{k=1}^{C}e^{\hH{3}_k}\right)\\ &amp; = \boxed{\log \left(\sum_{k=1}^{C}e^{\hH{3}_k}\right) - \hH{3}_i} \end{align*}\] <h2 id="gradients-backprop">Gradients (backprop)</h2> <p>Now for the backward pass. We’ll work our way from the loss back through each layer, applying the chain rule at each step.</p> <h3 id="outputs">Outputs</h3> <p>We begin by differentiating the loss with respect to the logits $\hH{3}$. The case split here is instructive: for the correct class, the gradient is the predicted probability minus one; for all other classes, it’s just the predicted probability. This unifies neatly into a single vectorized expression.</p> \[\begin{align*} \nabla_{\hH{3}_i}\mathcal{L}_i = \begin{cases} \underbrace{\frac{1}{\sum_ke^{\hH{3}_k}}\cdot\mathrm{e^{\hH{3}_i}}}_{\mathbf{q}_i} - 1 &amp; \text{, $i$ is correct class}\\[12mm] \mathbf{q}_i + 0 &amp; \text{, $i$ is incorrect class} \end{cases} \end{align*}\] \[\begin{align*} \boxed{\nabla_{\hH{3}}\mathcal{L} = \mathbf{q} - \mathbf{p}} \in \mathbb{R}^{N \times C} \end{align*}\] <h3 id="layer-2">Layer 2</h3> <p>With the upstream gradient $\nabla_{\hH{3}}\mathcal{L} = \mathbf{q} - \mathbf{p}$ in hand, we can now compute the gradients for $\W{2}$, $\B{2}$, and $\h{2}$, which we’ll need to continue propagating the signal backward.</p> \[\begin{align*} \frac{\partial\h{3}}{\partial\W{2}} = \h{2}^\top &amp; \Rightarrow \frac{\partial\mathcal{L}}{\partial\W{2}} = \frac{\partial\h{3}}{\partial\W{2}} \cdot \frac{\partial\mathcal{L}}{\partial\h{3}}\\[2mm] &amp; \Rightarrow \boxed{\frac{\partial\mathcal{L}}{\partial\W{2}} = \h{2}^\top (\mathbf{q}-\mathbf{p})} \in \mathbb{R}^{H \times C}\\[4mm] \frac{\partial\h{3}}{\partial\B{2}} = 1 &amp; \Rightarrow \boxed{\frac{\partial\mathcal{L}}{\partial\B{2}} = \mathbf{q}-\mathbf{p}} \in \mathbb{R}^{N \times C}\\[4mm] \frac{\partial\h{3}}{\partial\h{2}} = \W{2}^\top &amp; \Rightarrow \boxed{\frac{\partial\mathcal{L}}{\partial\h{2}} = (\mathbf{q}-\mathbf{p})\W{2}^\top} \in \mathbb{R}^{N \times H} \end{align*}\] <h3 id="layer-1-nonlinearity">Layer 1 nonlinearity</h3> <p>The ReLU gradient is a binary mask: it’s $1$ wherever the pre-activation $\hH{1}_{ij}$​ was non-negative, and $0$ elsewhere. Backpropagating through ReLU therefore simply zeros out the gradient at positions that were inactive in the forward pass.</p> \[\begin{align*} \frac{\partial\h{2}}{\partial\h{1}} &amp; = \nabla\mathrm{ReLU} = \begin{cases} +1 &amp; \hH{1}_{ij} \geq 0\\[1mm] 0 &amp; \hH{1}_{ij} &lt; 0 \end{cases} = \mathbf{1}(\hH{1}_{ij})\\[2mm] &amp; \Rightarrow \frac{\partial\mathcal{L}}{\partial\h{1}} = \frac{\partial\mathcal{L}}{\partial\h{2}}\frac{\partial\h{2}}{\partial\h{1}}\\[2mm] &amp; \Rightarrow \boxed{\frac{\partial\mathcal{L}}{\partial\h{1}} = \mathbf{1}(\frac{\partial\mathcal{L}}{\partial\h{2}})} \in \mathbb{R}^{N \times H} \end{align*}\] <h3 id="layer-1">Layer 1</h3> <p>Finally, we arrive at the gradients for the first layer’s parameters. The structure here mirrors Layer 2 exactly.</p> \[\begin{align*} \frac{\partial\h{1}}{\partial\W{1}} &amp; = \mathbf{X}^\top\\[2mm] &amp; \Rightarrow \frac{\partial\mathcal{L}}{\partial\W{1}} = \frac{\partial\h{1}}{\partial\W{1}} \frac{\partial\mathcal{L}}{\partial\h{1}}\\[2mm] &amp; \Rightarrow \boxed{\frac{\partial\mathcal{L}}{\partial\W{1}} = \mathbf{X}^\top \frac{\partial\mathcal{L}}{\partial\h{1}}}\in \mathbb{R}^{D \times H}\\[4mm] \frac{\partial\h{1}}{\partial\B{1}} &amp; = 1\\[2mm] &amp; \Rightarrow \boxed{\frac{\partial\mathcal{L}}{\partial\B{1}} = \frac{\partial\mathcal{L}}{\partial\h{1}}} \in \mathbb{R}^{N \times H}\\[4mm] \end{align*}\] <aside><p> Note how differentiation and the chain rule become easier when the dimensions of the variables are explicit. </p> </aside> <h2 id="wrapping-up">Wrapping up</h2> <p>Working through backpropagation by hand like this reveals a few recurring patterns worth internalizing. The gradient of a linear layer is always a matrix product involving the transpose of the layer’s weight or input. The gradient of an elementwise nonlinearity is always an elementwise product of the upstream gradient with the local derivative. And the gradient of the softmax-cross-entropy combination collapses to the elegantly simple $\mathbf{q} - \mathbf{p}$.</p> <p>Once you’ve seen these patterns, extending this derivation to deeper networks and different activations and loss functions becomes largely mechanical. Just apply the chain rule!</p>]]></content><author><name>Siavash Ahmadi</name></author><category term="AI,"/><category term="from-scratch"/><category term="ai,"/><category term="optimization,"/><category term="neural-network,"/><category term="math"/><summary type="html"><![CDATA[Detailed derivation of the forward and backward pass equations for a two layer neural network (multi-layer perceptron)]]></summary></entry><entry><title type="html">a post with plotly.js</title><link href="https://siaahmadi.github.io/blog/2025/plotly/" rel="alternate" type="text/html" title="a post with plotly.js"/><published>2025-03-26T14:24:00+00:00</published><updated>2025-03-26T14:24:00+00:00</updated><id>https://siaahmadi.github.io/blog/2025/plotly</id><content type="html" xml:base="https://siaahmadi.github.io/blog/2025/plotly/"><![CDATA[<p>This is an example post with some <a href="https://plotly.com/javascript/">plotly</a> code.</p> <div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">```</span><span class="nl">plotly
-</span><span class="sb">{
-  "data": [
-    {
-      "x": [1, 2, 3, 4],
-      "y": [10, 15, 13, 17],
-      "type": "scatter"
-    },
-    {
-      "x": [1, 2, 3, 4],
-      "y": [16, 5, 11, 9],
-      "type": "scatter"
-    }
-  ]
-}</span>
-<span class="p">```</span>
-</code></pre></div></div> <p>Which generates:</p> <pre><code class="language-plotly">{
-  "data": [
-    {
-      "x": [1, 2, 3, 4],
-      "y": [10, 15, 13, 17],
-      "type": "scatter"
-    },
-    {
-      "x": [1, 2, 3, 4],
-      "y": [16, 5, 11, 9],
-      "type": "scatter"
-    }
-  ]
-}
-</code></pre> <p>Also another example chart.</p> <div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">```</span><span class="nl">plotly
-</span><span class="sb">{
-  "data": [
-    {
-      "x": [1, 2, 3, 4],
-      "y": [10, 15, 13, 17],
-      "mode": "markers"
-    },
-    {
-      "x": [2, 3, 4, 5],
-      "y": [16, 5, 11, 9],
-      "mode": "lines"
-    },
-    {
-      "x": [1, 2, 3, 4],
-      "y": [12, 9, 15, 12],
-      "mode": "lines+markers"
-    }
-  ],
-  "layout": {
-    "title": {
-      "text": "Line and Scatter Plot"
-    }
-  }
-}</span>
-<span class="p">```</span>
-</code></pre></div></div> <p>This is how it looks like:</p> <pre><code class="language-plotly">{
-  "data": [
-    {
-      "x": [1, 2, 3, 4],
-      "y": [10, 15, 13, 17],
-      "mode": "markers"
-    },
-    {
-      "x": [2, 3, 4, 5],
-      "y": [16, 5, 11, 9],
-      "mode": "lines"
-    },
-    {
-      "x": [1, 2, 3, 4],
-      "y": [12, 9, 15, 12],
-      "mode": "lines+markers"
-    }
-  ],
-  "layout": {
-    "title": {
-      "text": "Line and Scatter Plot"
-    }
-  }
-}
-</code></pre>]]></content><author><name></name></author><category term="sample-posts"/><category term="formatting"/><category term="charts"/><summary type="html"><![CDATA[this is what included plotly.js code could look like]]></summary></entry><entry><title type="html">a post with image galleries</title><link href="https://siaahmadi.github.io/blog/2024/photo-gallery/" rel="alternate" type="text/html" title="a post with image galleries"/><published>2024-12-04T01:59:00+00:00</published><updated>2024-12-04T01:59:00+00:00</updated><id>https://siaahmadi.github.io/blog/2024/photo-gallery</id><content type="html" xml:base="https://siaahmadi.github.io/blog/2024/photo-gallery/"><![CDATA[<p>The images in this post are all zoomable, arranged into different mini-galleries using different libraries.</p> <h2 id="lightbox2"><a href="https://lokeshdhakar.com/projects/lightbox2/">Lightbox2</a></h2> <p><a href="https://cdn.photoswipe.com/photoswipe-demo-images/photos/1/img-2500.jpg" data-lightbox="roadtrip"><img src="https://cdn.photoswipe.com/photoswipe-demo-images/photos/1/img-200.jpg"/></a> <a href="https://cdn.photoswipe.com/photoswipe-demo-images/photos/2/img-2500.jpg" data-lightbox="roadtrip"><img src="https://cdn.photoswipe.com/photoswipe-demo-images/photos/2/img-200.jpg"/></a> <a href="https://cdn.photoswipe.com/photoswipe-demo-images/photos/3/img-2500.jpg" data-lightbox="roadtrip"><img src="https://cdn.photoswipe.com/photoswipe-demo-images/photos/3/img-200.jpg"/></a></p> <hr/> <h2 id="photoswipe"><a href="https://photoswipe.com/">PhotoSwipe</a></h2> <div class="pswp-gallery pswp-gallery--single-column" id="gallery--getting-started"> <a href="https://cdn.photoswipe.com/photoswipe-demo-images/photos/2/img-2500.jpg" data-pswp-width="1669" data-pswp-height="2500" target="_blank"> <img src="https://cdn.photoswipe.com/photoswipe-demo-images/photos/2/img-200.jpg" alt=""/> </a> <a href="https://cdn.photoswipe.com/photoswipe-demo-images/photos/7/img-2500.jpg" data-pswp-width="1875" data-pswp-height="2500" data-cropped="true" target="_blank"> <img src="https://cdn.photoswipe.com/photoswipe-demo-images/photos/7/img-200.jpg" alt=""/> </a> <a href="https://unsplash.com" data-pswp-src="https://cdn.photoswipe.com/photoswipe-demo-images/photos/3/img-2500.jpg" data-pswp-width="2500" data-pswp-height="1666" target="_blank"> <img src="https://cdn.photoswipe.com/photoswipe-demo-images/photos/3/img-200.jpg" alt=""/> </a> <div> <a href="https://cdn.photoswipe.com/photoswipe-demo-images/photos/6/img-2500.jpg" data-pswp-width="2500" data-pswp-height="1667" target="_blank"> <img src="https://cdn.photoswipe.com/photoswipe-demo-images/photos/6/img-200.jpg" alt=""/> </a> </div> </div> <hr/> <h2 id="spotlight-js"><a href="https://nextapps-de.github.io/spotlight/">Spotlight JS</a></h2> <div class="spotlight-group"> <a class="spotlight" href="https://cdn.photoswipe.com/photoswipe-demo-images/photos/1/img-2500.jpg"> <img src="https://cdn.photoswipe.com/photoswipe-demo-images/photos/1/img-200.jpg"/> </a> <a class="spotlight" href="https://cdn.photoswipe.com/photoswipe-demo-images/photos/2/img-2500.jpg"> <img src="https://cdn.photoswipe.com/photoswipe-demo-images/photos/2/img-200.jpg"/> </a> <a class="spotlight" href="https://cdn.photoswipe.com/photoswipe-demo-images/photos/3/img-2500.jpg"> <img src="https://cdn.photoswipe.com/photoswipe-demo-images/photos/3/img-200.jpg"/> </a> </div> <div class="spotlight-group"> <a class="spotlight" href="https://cdn.photoswipe.com/photoswipe-demo-images/photos/4/img-2500.jpg"> <img src="https://cdn.photoswipe.com/photoswipe-demo-images/photos/4/img-200.jpg"/> </a> <a class="spotlight" href="https://cdn.photoswipe.com/photoswipe-demo-images/photos/5/img-2500.jpg"> <img src="https://cdn.photoswipe.com/photoswipe-demo-images/photos/5/img-200.jpg"/> </a> <a class="spotlight" href="https://cdn.photoswipe.com/photoswipe-demo-images/photos/6/img-2500.jpg"> <img src="https://cdn.photoswipe.com/photoswipe-demo-images/photos/6/img-200.jpg"/> </a> </div> <hr/> <h2 id="venobox"><a href="https://veno.es/venobox/">Venobox</a></h2> <p><a class="venobox" data-gall="myGallery" href="https://cdn.photoswipe.com/photoswipe-demo-images/photos/1/img-2500.jpg"><img src="https://cdn.photoswipe.com/photoswipe-demo-images/photos/1/img-200.jpg"/></a> <a class="venobox" data-gall="myGallery" href="https://cdn.photoswipe.com/photoswipe-demo-images/photos/2/img-2500.jpg"><img src="https://cdn.photoswipe.com/photoswipe-demo-images/photos/2/img-200.jpg"/></a> <a class="venobox" data-gall="myGallery" href="https://cdn.photoswipe.com/photoswipe-demo-images/photos/3/img-2500.jpg"><img src="https://cdn.photoswipe.com/photoswipe-demo-images/photos/3/img-200.jpg"/></a></p>]]></content><author><name></name></author><category term="sample-posts"/><category term="formatting"/><category term="images"/><summary type="html"><![CDATA[this is what included image galleries could look like]]></summary></entry><entry><title type="html">Google Gemini updates: Flash 1.5, Gemma 2 and Project Astra</title><link href="https://siaahmadi.github.io/blog/2024/google-gemini-updates-flash-15-gemma-2-and-project-astra/" rel="alternate" type="text/html" title="Google Gemini updates: Flash 1.5, Gemma 2 and Project Astra"/><published>2024-05-14T00:00:00+00:00</published><updated>2024-05-14T00:00:00+00:00</updated><id>https://siaahmadi.github.io/blog/2024/google-gemini-updates-flash-15-gemma-2-and-project-astra</id><content type="html" xml:base="https://siaahmadi.github.io/blog/2024/google-gemini-updates-flash-15-gemma-2-and-project-astra/"><![CDATA[<p>Learn more:Learn more:Learn more:Learn more:Learn more:Learn more:May 14, 2024 We’re introducing a series of updates across the Gemini family of models, including the new 1.5 Flash, our lightweight model for speed and efficiency, and Project Astra, our vision for the future of AI assistants. In December, we launched our first natively multimodal model Gemini 1.0 in three sizes: Ultra, Pro and Nano. Just a few months later we released 1.5 Pro, with enhanced performance and a breakthrough long context window of 1 million tokens.Developers and enterprise customers have been putting 1.5 Pro to use in incredible ways and finding its long context window, multimodal reasoning capabilities and impressive overall performance incredibly useful.We know from user feedback that some applications need lower latency and a lower cost to serve. This inspired us to keep innovating, so today, we’re introducing Gemini 1.5 Flash: a model that’s lighter-weight than 1.5 Pro, and designed to be fast and efficient to serve at scale.Both 1.5 Pro and 1.5 Flash are available in public preview with a 1 million token context window in Google AI Studio and Vertex AI. And now, 1.5 Pro is also available with a 2 million token context window via waitlist to developers using the API and to Google Cloud customers.We’re also introducing updates across the Gemini family of models, announcing our next generation of open models, Gemma 2, and sharing progress on the future of AI assistants, with Project Astra.Context lengths of leading foundation models compared with Gemini 1.5’s 2 million token capability1.5 Flash is the newest addition to the Gemini model family and the fastest Gemini model served in the API. It’s optimized for high-volume, high-frequency tasks at scale, is more cost-efficient to serve and features our breakthrough long context window.While it’s a lighter weight model than 1.5 Pro, it’s highly capable of multimodal reasoning across vast amounts of information and delivers impressive quality for its size.The new Gemini 1.5 Flash model is optimized for speed and efficiency, is highly capable of multimodal reasoning and features our breakthrough long context window.1.5 Flash excels at summarization, chat applications, image and video captioning, data extraction from long documents and tables, and more. This is because it’s been trained by 1.5 Pro through a process called “distillation,” where the most essential knowledge and skills from a larger model are transferred to a smaller, more efficient model.Read more about 1.5 Flash in our updated Gemini 1.5 technical report, on the Gemini technology page, and learn about 1.5 Flash’s availability and pricing.Over the last few months, we’ve significantly improved 1.5 Pro, our best model for general performance across a wide range of tasks.Beyond extending its context window to 2 million tokens, we’ve enhanced its code generation, logical reasoning and planning, multi-turn conversation, and audio and image understanding through data and algorithmic advances. We see strong improvements on public and internal benchmarks for each of these tasks.1.5 Pro can now follow increasingly complex and nuanced instructions, including ones that specify product-level behavior involving role, format and style. We’ve improved control over the model’s responses for specific use cases, like crafting the persona and response style of a chat agent or automating workflows through multiple function calls. And we’ve enabled users to steer model behavior by setting system instructions.We added audio understanding in the Gemini API and Google AI Studio, so 1.5 Pro can now reason across image and audio for videos uploaded in Google AI Studio. And we’re now integrating 1.5 Pro into Google products, including Gemini Advanced and in Workspace apps.Read more about 1.5 Pro in our updated Gemini 1.5 technical report and on the Gemini technology page.Gemini Nano is expanding beyond text-only inputs to include images as well. Starting with Pixel, applications using Gemini Nano with Multimodality will be able to understand the world the way people do — not just through text, but also through sight, sound and spoken language.Read more about Gemini 1.0 Nano on Android.Today, we’re also sharing a series of updates to Gemma, our family of open models built from the same research and technology used to create the Gemini models.We’re announcing Gemma 2, our next generation of open models for responsible AI innovation. Gemma 2 has a new architecture designed for breakthrough performance and efficiency, and will be available in new sizes.The Gemma family is also expanding with PaliGemma, our first vision-language model inspired by PaLI-3. And we’ve upgraded our Responsible Generative AI Toolkit with LLM Comparator for evaluating the quality of model responses.Read more on the Developer blog.As part of Google DeepMind’s mission to build AI responsibly to benefit humanity, we’ve always wanted to develop universal AI agents that can be helpful in everyday life. That’s why today, we’re sharing our progress in building the future of AI assistants with Project Astra (advanced seeing and talking responsive agent).To be truly useful, an agent needs to understand and respond to the complex and dynamic world just like people do — and take in and remember what it sees and hears to understand context and take action. It also needs to be proactive, teachable and personal, so users can talk to it naturally and without lag or delay.While we’ve made incredible progress developing AI systems that can understand multimodal information, getting response time down to something conversational is a difficult engineering challenge. Over the past few years, we’ve been working to improve how our models perceive, reason and converse to make the pace and quality of interaction feel more natural.Building on Gemini, we’ve developed prototype agents that can process information faster by continuously encoding video frames, combining the video and speech input into a timeline of events, and caching this information for efficient recall.By leveraging our leading speech models, we also enhanced how they sound, giving the agents a wider range of intonations. These agents can better understand the context they’re being used in, and respond quickly, in conversation.With technology like this, it’s easy to envision a future where people could have an expert AI assistant by their side, through a phone or glasses. And some of these capabilities are coming to Google products, like the Gemini app and web experience, later this year.We’ve made incredible progress so far with our family of Gemini models, and we’re always striving to advance the state-of-the-art even further. By investing in a relentless production line of innovation, we’re able to explore new ideas at the frontier, while also unlocking the possibility of new and exciting Gemini use cases.Learn more about Gemini and its capabilities. Your information will be used in accordance with Google’s privacy policy.</p> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      Done. Just one step more.
+</span></code></pre></div></div> <p>the <code class="language-plaintext highlighter-rouge">@</code> operator won’t complete properly because after it lines up the tensors on the last two axes ($L_q \times d_k$ and $d_k\times d_\text{model}$), the remaining axes are neither identical nor broadcastable (expected both to be either $h \times N$ or $h$ or $N$, but got $h\times N$ vs. $h$). Instead, we should be adding an axis to allow NumPy’s broadcasting rules to kick in:</p> \[\renewcommand{\dQdq}{ \Dp[\Q]{\Vector{q}} &amp; = \Wq^\top \in \mathbb{R}^{h\times 1 \times d_k\times d_\text{model}} } \renewcommand{\dQdWq}{ \Dp[\Q]{\Wq} = \Vector{q}^\top \in \mathbb{R}^{1\times N\times d_\text{model} \times L_q} } \renewcommand{\dLdq}{ \Dp[\Ll]{\Vector{q}} &amp; = G\Dp[\Q]{\Vector{q}} \in \mathbb{R}^{h\times N\times L_q \times d_\text{model}} } \newcommand{\dLdWq}{ \Dp[\Ll]{\Wq} = \Dp[\Q]{\Wq}G \in \mathbb{R}^{h\times N\times d_\text{model}\times d_k} }\] \[\begin{align*} \dQdq, \quad \dQdWq &amp;&amp; \tag*{(local gradients)} \\[5mm] \dLdq, \quad \dLdWq &amp;&amp; \tag*{(upstream of lower operations)} \end{align*}\] <p>This makes it so that the matrices represented by the final two dimensions interact independently for each head and batch.</p> <p>Finally to make sure the dimensions are correct, we should be summing along the batch axis:</p> \[\renewcommand{\dLdq}{ \Dp[\Ll]{\Vector{q}} &amp; = \sum_{b\,\in\,\text{batch}}\left(G\Dp[\Q]{\Vector{q}}\right)_b \in \mathbb{R}^{h\times L_q \times d_\text{model}} } \renewcommand{\dLdWq}{ \Dp[\Ll]{\Wq} = \sum_{b\,\in\,\text{batch}}\left(\Dp[\Q]{\Wq}G\right)_b \in \mathbb{R}^{h\times d_\text{model}\times d_k} }\] \[\begin{align*} \dLdq, \quad \dLdWq\\ \end{align*}\] <p>Similar arguments hold for the other matrices.</p>]]></content><author><name></name></author><category term="AI,"/><category term="from-scratch"/><category term="ai,"/><category term="optimization,"/><category term="neural-network,"/><category term="equations,"/><category term="transformer"/><summary type="html"><![CDATA[Discussions of the Transformer architecture, atlernate visualizations, and reinterpretation as a database.]]></summary></entry><entry><title type="html">A two layer neural network from first principles</title><link href="https://siaahmadi.github.io/blog/2026/mlp/" rel="alternate" type="text/html" title="A two layer neural network from first principles"/><published>2026-02-18T00:00:00+00:00</published><updated>2026-02-18T00:00:00+00:00</updated><id>https://siaahmadi.github.io/blog/2026/mlp</id><content type="html" xml:base="https://siaahmadi.github.io/blog/2026/mlp/"><![CDATA[\[\newcommand{\h}[1]{\mathbf{h}_{#1}} \newcommand{\hH}[1]{\mathbf{h}^{(#1)}} \newcommand{\B}[1]{\mathbf{b}_{#1}} \newcommand{\W}[1]{\mathbf{W}_{#1}}\] <p>(This post is a companion to the MLP-from-scratch mini project available at <a href="https://github.com/siaahmadi/from_scratch/tree/master/dl_from_scratch/mlp">https://github.com/siaahmadi/from_scratch</a>.)</p> <p>Backpropagation is the engine behind training neural networks, but it can feel abstract without seeing the math spelled out end-to-end. In this post, we’ll walk through a concrete two-layer network — forward pass, loss computation, and the full backward pass — so that each gradient has a clear derivation you can follow and implement yourself.</p> <p>One habit that pays off enormously here is writing the dimensions of every matrix and intermediate value explicitly. It might seem like extra notation at first, but it earns its keep in two ways. First, it makes differentiation more mechanical: when you need to multiply two gradient matrices together, the required transposes and orderings are often forced on you by dimensional compatibility alone, leaving little room for error. Second, it turns implementation bugs into obvious shape mismatches. If a gradient comes out the wrong size, you know immediately that something is wrong. Rather than silently accumulating a numerically wrong update, you spot and correct the mistake. With that in mind, you’ll notice that every quantity in this post is annotated with its shape. Treat those annotations as part of the math.</p> <h2 id="inputs">Inputs</h2> <p>Suppose we have a dataset of $N$ examples, each with $D$ features, and $C$ possible output classes:</p> \[\begin{align*} \mathbf{X} &amp; \in \mathbb{R}^{N \times D}, \mathbf{y} \in \mathbb{R}^{N \times C}\\ \end{align*}\] <h2 id="the-network">The Network</h2> <p>Our network has one hidden layer of width $H$. This means we need two sets of weight matrices and bias vectors, one for each linear transformation.</p> \[\begin{align*} \W{1} &amp; \in \mathbb{R}^{D \times H}, \B{1} \in \mathbb{R}^{1 \times H}\\ \W{2} &amp; \in \mathbb{R}^{H \times C}, \B{2} \in \mathbb{R}^{1 \times C}\\ \end{align*}\] <p>The forward pass computes three intermediate values. First, a linear transformation of the input. Then, a nonlinear activation. Finally, a second linear transformation that produces the raw class scores (logits).</p> \[\begin{align*} \h{1} = \mathbf{X} \W{1} + \B{1} &amp; \in \mathbb{R}^{N \times H}\\ \h{2} = f(\h{1}) &amp; \in \mathbb{R}^{N \times H}\\ \h{3} = \h{2} \W{2} + \B{2} &amp; \in \mathbb{R}^{N \times C} \end{align*}\] <p>Note: Below, we will use the notations $\h{i}$ and $\hH{i}$ interchangeably so as to make the text more legible. In particular, when it’s necessary to index into $\h{i}$, we will use the $\hH{i}_j$ notation to refer to the $j$th element in $\h{i}$.</p> <h2 id="nonlinearity">Nonlinearity</h2> <p>For our activation function $f$, we use ReLU (Rectified Linear Unit). It’s applied elementwise: negative values are clamped to zero, and positive values pass through unchanged. Its simplicity is what makes its gradient so easy to compute later.</p> \[\begin{align*} f(\mathbf{X}) = \mathrm{ReLU}(\mathbf{X}) &amp; = \begin{bmatrix} \mathrm{ReLU}(x_{11}) &amp; \cdots &amp; \mathrm{ReLU}(x_{1j}) &amp; \cdots &amp; \mathrm{ReLU}(x_{1n})\\ \vdots &amp; \ddots &amp; &amp; &amp; \vdots\\ &amp; &amp; \mathrm{ReLU}(x_{ij}) &amp; &amp; \\ \vdots &amp; &amp; &amp; \ddots &amp; \vdots\\ \mathrm{ReLU}(x_{m1}) &amp; \cdots &amp; \mathrm{ReLU}(x_{mj}) &amp; \cdots &amp; \mathrm{ReLU}(x_{mn})\\ \end{bmatrix}\\[4mm] &amp; = \begin{cases} x_{ij} &amp; \text{, if } x_{ij} \geq 0 \\ 0 &amp; \text{, if } x_{ij} &lt; 0 \end{cases} \end{align*}\] <h2 id="predictions">Predictions</h2> <p>The logits in $\h{3}$ are not probabilities as they can be any real number. To convert them into a proper probability distribution over the $C$ classes, we apply the softmax function, which exponentiates each score and normalizes by the sum. The result $\mathbf{q}_i$​ is our model’s predicted probability for class $i$.</p> \[\begin{align*} \mathbf{q}_i &amp; = \mathrm{softmax}(\h{3})_i\\ \mathrm{softmax}(\mathbf{z})_i &amp; = \frac{e^{\mathbf{z}_i}}{\sum_{k=1}^{C}e^{\mathbf{z}_k}} \end{align*}\] <h2 id="loss">Loss</h2> <p>We measure how far our predictions are from the truth using <strong>cross-entropy loss</strong>. Here, $\mathbf{p}$ is the one-hot true distribution and $\mathbf{q}$ is our predicted distribution. Since $\mathbf{p}$ is one-hot, the sum over all classes collapses to just the log-probability assigned to the correct class $i$ which gives us the closed-form expression for the loss.</p> <p>Below, $i$ is the index of the correct class.</p> \[\begin{align*} \mathcal{L} = \mathrm{CE}(\underbrace{p}_{\text{true}}, \underbrace{q}_{\text{estimate}}) &amp; = -\mathbb{E}_p[\log q]\\ &amp; = -\sum_{k=1}^{C} \mathbf{p}_k \log \mathbf{q}_k\\ &amp; = -\underbrace{\mathbf{p}_i}_1\cdot\log (\frac{e^{\hH{3}_i}}{\sum_{k=1}^{C}e^{\hH{3}_k}})\\ &amp; = -\log e^{\hH{3}_i} + \log \left(\sum_{k=1}^{C}e^{\hH{3}_k}\right)\\ &amp; = \boxed{\log \left(\sum_{k=1}^{C}e^{\hH{3}_k}\right) - \hH{3}_i} \end{align*}\] <h2 id="gradients-backprop">Gradients (backprop)</h2> <p>Now for the backward pass. We’ll work our way from the loss back through each layer, applying the chain rule at each step.</p> <h3 id="outputs">Outputs</h3> <p>We begin by differentiating the loss with respect to the logits $\hH{3}$. The case split here is instructive: for the correct class, the gradient is the predicted probability minus one; for all other classes, it’s just the predicted probability. This unifies neatly into a single vectorized expression.</p> \[\begin{align*} \nabla_{\hH{3}_i}\mathcal{L}_i = \begin{cases} \underbrace{\frac{1}{\sum_ke^{\hH{3}_k}}\cdot\mathrm{e^{\hH{3}_i}}}_{\mathbf{q}_i} - 1 &amp; \text{, $i$ is correct class}\\[12mm] \mathbf{q}_i + 0 &amp; \text{, $i$ is incorrect class} \end{cases} \end{align*}\] \[\begin{align*} \boxed{\nabla_{\hH{3}}\mathcal{L} = \mathbf{q} - \mathbf{p}} \in \mathbb{R}^{N \times C} \end{align*}\] <h3 id="layer-2">Layer 2</h3> <p>With the upstream gradient $\nabla_{\hH{3}}\mathcal{L} = \mathbf{q} - \mathbf{p}$ in hand, we can now compute the gradients for $\W{2}$, $\B{2}$, and $\h{2}$, which we’ll need to continue propagating the signal backward.</p> \[\begin{align*} \frac{\partial\h{3}}{\partial\W{2}} = \h{2}^\top &amp; \Rightarrow \frac{\partial\mathcal{L}}{\partial\W{2}} = \frac{\partial\h{3}}{\partial\W{2}} \cdot \frac{\partial\mathcal{L}}{\partial\h{3}}\\[2mm] &amp; \Rightarrow \boxed{\frac{\partial\mathcal{L}}{\partial\W{2}} = \h{2}^\top (\mathbf{q}-\mathbf{p})} \in \mathbb{R}^{H \times C}\\[4mm] \frac{\partial\h{3}}{\partial\B{2}} = 1 &amp; \Rightarrow \boxed{\frac{\partial\mathcal{L}}{\partial\B{2}} = \mathbf{q}-\mathbf{p}} \in \mathbb{R}^{N \times C}\\[4mm] \frac{\partial\h{3}}{\partial\h{2}} = \W{2}^\top &amp; \Rightarrow \boxed{\frac{\partial\mathcal{L}}{\partial\h{2}} = (\mathbf{q}-\mathbf{p})\W{2}^\top} \in \mathbb{R}^{N \times H} \end{align*}\] <h3 id="layer-1-nonlinearity">Layer 1 nonlinearity</h3> <p>The ReLU gradient is a binary mask: it’s $1$ wherever the pre-activation $\hH{1}_{ij}$​ was non-negative, and $0$ elsewhere. Backpropagating through ReLU therefore simply zeros out the gradient at positions that were inactive in the forward pass.</p> \[\begin{align*} \frac{\partial\h{2}}{\partial\h{1}} &amp; = \nabla\mathrm{ReLU} = \begin{cases} +1 &amp; \hH{1}_{ij} \geq 0\\[1mm] 0 &amp; \hH{1}_{ij} &lt; 0 \end{cases} = \mathbf{1}(\hH{1}_{ij})\\[2mm] &amp; \Rightarrow \frac{\partial\mathcal{L}}{\partial\h{1}} = \frac{\partial\mathcal{L}}{\partial\h{2}}\frac{\partial\h{2}}{\partial\h{1}}\\[2mm] &amp; \Rightarrow \boxed{\frac{\partial\mathcal{L}}{\partial\h{1}} = \mathbf{1}(\frac{\partial\mathcal{L}}{\partial\h{2}})} \in \mathbb{R}^{N \times H} \end{align*}\] <h3 id="layer-1">Layer 1</h3> <p>Finally, we arrive at the gradients for the first layer’s parameters. The structure here mirrors Layer 2 exactly.</p> \[\begin{align*} \frac{\partial\h{1}}{\partial\W{1}} &amp; = \mathbf{X}^\top\\[2mm] &amp; \Rightarrow \frac{\partial\mathcal{L}}{\partial\W{1}} = \frac{\partial\h{1}}{\partial\W{1}} \frac{\partial\mathcal{L}}{\partial\h{1}}\\[2mm] &amp; \Rightarrow \boxed{\frac{\partial\mathcal{L}}{\partial\W{1}} = \mathbf{X}^\top \frac{\partial\mathcal{L}}{\partial\h{1}}}\in \mathbb{R}^{D \times H}\\[4mm] \frac{\partial\h{1}}{\partial\B{1}} &amp; = 1\\[2mm] &amp; \Rightarrow \boxed{\frac{\partial\mathcal{L}}{\partial\B{1}} = \frac{\partial\mathcal{L}}{\partial\h{1}}} \in \mathbb{R}^{N \times H}\\[4mm] \end{align*}\] <aside><p> Note how differentiation and the chain rule become easier when the dimensions of the variables are explicit. </p> </aside> <h2 id="wrapping-up">Wrapping up</h2> <p>Working through backpropagation by hand like this reveals a few recurring patterns worth internalizing. The gradient of a linear layer is always a matrix product involving the transpose of the layer’s weight or input. The gradient of an elementwise nonlinearity is always an elementwise product of the upstream gradient with the local derivative. And the gradient of the softmax-cross-entropy combination collapses to the elegantly simple $\mathbf{q} - \mathbf{p}$.</p> <p>Once you’ve seen these patterns, extending this derivation to deeper networks and different activations and loss functions becomes largely mechanical. Just apply the chain rule!</p>]]></content><author><name>Siavash Ahmadi</name></author><category term="AI,"/><category term="from-scratch"/><category term="ai,"/><category term="optimization,"/><category term="neural-network,"/><category term="math"/><summary type="html"><![CDATA[Detailed derivation of the forward and backward pass equations for a two layer neural network (multi-layer perceptron)]]></summary></entry><entry><title type="html">Google Gemini updates: Flash 1.5, Gemma 2 and Project Astra</title><link href="https://siaahmadi.github.io/blog/2024/google-gemini-updates-flash-15-gemma-2-and-project-astra/" rel="alternate" type="text/html" title="Google Gemini updates: Flash 1.5, Gemma 2 and Project Astra"/><published>2024-05-14T00:00:00+00:00</published><updated>2024-05-14T00:00:00+00:00</updated><id>https://siaahmadi.github.io/blog/2024/google-gemini-updates-flash-15-gemma-2-and-project-astra</id><content type="html" xml:base="https://siaahmadi.github.io/blog/2024/google-gemini-updates-flash-15-gemma-2-and-project-astra/"><![CDATA[<p>Learn more:Learn more:Learn more:Learn more:Learn more:Learn more:May 14, 2024 We’re introducing a series of updates across the Gemini family of models, including the new 1.5 Flash, our lightweight model for speed and efficiency, and Project Astra, our vision for the future of AI assistants. In December, we launched our first natively multimodal model Gemini 1.0 in three sizes: Ultra, Pro and Nano. Just a few months later we released 1.5 Pro, with enhanced performance and a breakthrough long context window of 1 million tokens.Developers and enterprise customers have been putting 1.5 Pro to use in incredible ways and finding its long context window, multimodal reasoning capabilities and impressive overall performance incredibly useful.We know from user feedback that some applications need lower latency and a lower cost to serve. This inspired us to keep innovating, so today, we’re introducing Gemini 1.5 Flash: a model that’s lighter-weight than 1.5 Pro, and designed to be fast and efficient to serve at scale.Both 1.5 Pro and 1.5 Flash are available in public preview with a 1 million token context window in Google AI Studio and Vertex AI. And now, 1.5 Pro is also available with a 2 million token context window via waitlist to developers using the API and to Google Cloud customers.We’re also introducing updates across the Gemini family of models, announcing our next generation of open models, Gemma 2, and sharing progress on the future of AI assistants, with Project Astra.Context lengths of leading foundation models compared with Gemini 1.5’s 2 million token capability1.5 Flash is the newest addition to the Gemini model family and the fastest Gemini model served in the API. It’s optimized for high-volume, high-frequency tasks at scale, is more cost-efficient to serve and features our breakthrough long context window.While it’s a lighter weight model than 1.5 Pro, it’s highly capable of multimodal reasoning across vast amounts of information and delivers impressive quality for its size.The new Gemini 1.5 Flash model is optimized for speed and efficiency, is highly capable of multimodal reasoning and features our breakthrough long context window.1.5 Flash excels at summarization, chat applications, image and video captioning, data extraction from long documents and tables, and more. This is because it’s been trained by 1.5 Pro through a process called “distillation,” where the most essential knowledge and skills from a larger model are transferred to a smaller, more efficient model.Read more about 1.5 Flash in our updated Gemini 1.5 technical report, on the Gemini technology page, and learn about 1.5 Flash’s availability and pricing.Over the last few months, we’ve significantly improved 1.5 Pro, our best model for general performance across a wide range of tasks.Beyond extending its context window to 2 million tokens, we’ve enhanced its code generation, logical reasoning and planning, multi-turn conversation, and audio and image understanding through data and algorithmic advances. We see strong improvements on public and internal benchmarks for each of these tasks.1.5 Pro can now follow increasingly complex and nuanced instructions, including ones that specify product-level behavior involving role, format and style. We’ve improved control over the model’s responses for specific use cases, like crafting the persona and response style of a chat agent or automating workflows through multiple function calls. And we’ve enabled users to steer model behavior by setting system instructions.We added audio understanding in the Gemini API and Google AI Studio, so 1.5 Pro can now reason across image and audio for videos uploaded in Google AI Studio. And we’re now integrating 1.5 Pro into Google products, including Gemini Advanced and in Workspace apps.Read more about 1.5 Pro in our updated Gemini 1.5 technical report and on the Gemini technology page.Gemini Nano is expanding beyond text-only inputs to include images as well. Starting with Pixel, applications using Gemini Nano with Multimodality will be able to understand the world the way people do — not just through text, but also through sight, sound and spoken language.Read more about Gemini 1.0 Nano on Android.Today, we’re also sharing a series of updates to Gemma, our family of open models built from the same research and technology used to create the Gemini models.We’re announcing Gemma 2, our next generation of open models for responsible AI innovation. Gemma 2 has a new architecture designed for breakthrough performance and efficiency, and will be available in new sizes.The Gemma family is also expanding with PaliGemma, our first vision-language model inspired by PaLI-3. And we’ve upgraded our Responsible Generative AI Toolkit with LLM Comparator for evaluating the quality of model responses.Read more on the Developer blog.As part of Google DeepMind’s mission to build AI responsibly to benefit humanity, we’ve always wanted to develop universal AI agents that can be helpful in everyday life. That’s why today, we’re sharing our progress in building the future of AI assistants with Project Astra (advanced seeing and talking responsive agent).To be truly useful, an agent needs to understand and respond to the complex and dynamic world just like people do — and take in and remember what it sees and hears to understand context and take action. It also needs to be proactive, teachable and personal, so users can talk to it naturally and without lag or delay.While we’ve made incredible progress developing AI systems that can understand multimodal information, getting response time down to something conversational is a difficult engineering challenge. Over the past few years, we’ve been working to improve how our models perceive, reason and converse to make the pace and quality of interaction feel more natural.Building on Gemini, we’ve developed prototype agents that can process information faster by continuously encoding video frames, combining the video and speech input into a timeline of events, and caching this information for efficient recall.By leveraging our leading speech models, we also enhanced how they sound, giving the agents a wider range of intonations. These agents can better understand the context they’re being used in, and respond quickly, in conversation.With technology like this, it’s easy to envision a future where people could have an expert AI assistant by their side, through a phone or glasses. And some of these capabilities are coming to Google products, like the Gemini app and web experience, later this year.We’ve made incredible progress so far with our family of Gemini models, and we’re always striving to advance the state-of-the-art even further. By investing in a relentless production line of innovation, we’re able to explore new ideas at the frontier, while also unlocking the possibility of new and exciting Gemini use cases.Learn more about Gemini and its capabilities. Your information will be used in accordance with Google’s privacy policy.</p> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>      Done. Just one step more.
     
       Check your inbox to confirm your subscription.
     You are already subscribed to our newsletter.
@@ -127,82 +47,1013 @@ O = db[4] # returns `d_dimensional_vector_4`
     
   Let’s stay in touch. Get the latest news from Google in your inbox.
           Follow Us
-</code></pre></div></div>]]></content><author><name></name></author><category term="external-posts"/><category term="google"/><summary type="html"><![CDATA[We’re sharing updates across our Gemini family of models and a glimpse of Project Astra, our vision for the future of AI assistants.]]></summary></entry><entry><title type="html">a post with tabs</title><link href="https://siaahmadi.github.io/blog/2024/tabs/" rel="alternate" type="text/html" title="a post with tabs"/><published>2024-05-01T00:32:13+00:00</published><updated>2024-05-01T00:32:13+00:00</updated><id>https://siaahmadi.github.io/blog/2024/tabs</id><content type="html" xml:base="https://siaahmadi.github.io/blog/2024/tabs/"><![CDATA[<p>This is how a post with <a href="https://github.com/Ovski4/jekyll-tabs">tabs</a> looks like. Note that the tabs could be used for different purposes, not only for code.</p> <h2 id="first-tabs">First tabs</h2> <p>To add tabs, use the following syntax:</p> <div class="language-liquid highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="cp">{%</span><span class="w"> </span><span class="nt">tabs</span><span class="w"> </span><span class="nv">group-name</span><span class="w"> </span><span class="cp">%}</span>
+</code></pre></div></div>]]></content><author><name></name></author><category term="external-posts"/><category term="google"/><summary type="html"><![CDATA[We’re sharing updates across our Gemini family of models and a glimpse of Project Astra, our vision for the future of AI assistants.]]></summary></entry><entry><title type="html">Displaying External Posts on Your al-folio Blog</title><link href="https://siaahmadi.github.io/blog/2022/displaying-external-posts-on-your-al-folio-blog/" rel="alternate" type="text/html" title="Displaying External Posts on Your al-folio Blog"/><published>2022-04-23T23:20:09+00:00</published><updated>2022-04-23T23:20:09+00:00</updated><id>https://siaahmadi.github.io/blog/2022/displaying-external-posts-on-your-al-folio-blog</id><content type="html" xml:base="https://siaahmadi.github.io/blog/2022/displaying-external-posts-on-your-al-folio-blog/"><![CDATA[<h3>External Posts on Your al-folio Blog</h3> <p>If you prefer publishing blog posts on medium.com or other external sources, starting version v0.5.0, <a href="https://github.com/alshedivat/al-folio">al-folio</a> lets you to display your external posts in the blog feed of your website! 🎉🎉</p> <p>Configuring external sources of super simple. After upgrading to v0.5.0, just add the following section to your _config.yml:</p> <pre>external_sources:<br />  - name: medium.com  # name of the source (arbitrary string)<br />    rss_url: <a href="https://medium.com/@al-folio/feed">https://medium.com/@&lt;your-medium-username&gt;/feed</a></pre> <p>The example above adds your medium.com blog post feed as an external source. But you can add arbitrary RSS feeds as sources.</p> <p>Any questions or suggestions? 👉 Start <a href="https://github.com/alshedivat/al-folio/discussions">a discussion on GitHub</a>!</p> <p><img src="https://medium.com/_/stat?event=post.clientViewed&amp;referrerSource=full_rss&amp;postId=b60a1d241a0a" width="1" height="1" alt=""/></p>]]></content><author><name></name></author><category term="external-posts"/><category term="medium"/></entry><entry><title type="html">Strong scaling of autogressive inference</title><link href="https://siaahmadi.github.io/blog/2021/original-template/" rel="alternate" type="text/html" title="Strong scaling of autogressive inference"/><published>2021-05-22T00:00:00+00:00</published><updated>2021-05-22T00:00:00+00:00</updated><id>https://siaahmadi.github.io/blog/2021/original-template</id><content type="html" xml:base="https://siaahmadi.github.io/blog/2021/original-template/"><![CDATA[<h2 id="equations">Equations</h2> <p>This theme supports rendering beautiful math in inline and display modes using <a href="https://www.mathjax.org/">MathJax 3</a> engine. You just need to surround your math expression with <code class="language-plaintext highlighter-rouge">$$</code>, like <code class="language-plaintext highlighter-rouge">$$ E = mc^2 $$</code>. If you leave it inside a paragraph, it will produce an inline expression, just like \(E = mc^2\).</p> <p>In fact, you can also use a single dollar sign <code class="language-plaintext highlighter-rouge">$</code> to create inline formulas, such as <code class="language-plaintext highlighter-rouge">$ E = mc^2 $</code>, which will render as $ E = mc^2 $. This approach provides the same effect during TeX-based compilation, but visually it appears slightly less bold compared to double-dollar signs <code class="language-plaintext highlighter-rouge">$$</code>, making it blend more naturally with surrounding text.</p> <p>To use display mode, again surround your expression with <code class="language-plaintext highlighter-rouge">$$</code> and place it as a separate paragraph. Here is an example:</p> \[\left( \sum_{k=1}^n a_k b_k \right)^2 \leq \left( \sum_{k=1}^n a_k^2 \right) \left( \sum_{k=1}^n b_k^2 \right)\] <p>Note that MathJax 3 is <a href="https://docs.mathjax.org/en/latest/upgrading/whats-new-3.0.html">a major re-write of MathJax</a> that brought a significant improvement to the loading and rendering speed, which is now <a href="https://www.intmath.com/cg5/katex-mathjax-comparison.php">on par with KaTeX</a>.</p> <hr/> <h2 id="citations">Citations</h2> <p>Citations are then used in the article body with the <code class="language-plaintext highlighter-rouge">&lt;d-cite&gt;</code> tag. The key attribute is a reference to the id provided in the bibliography. The key attribute can take multiple ids, separated by commas.</p> <p>The citation is presented inline like this: <d-cite key="gregor2015draw"></d-cite> (a number that displays more information on hover). If you have an appendix, a bibliography is automatically created and populated in it.</p> <p>Distill chose a numerical inline citation style to improve readability of citation dense articles and because many of the benefits of longer citations are obviated by displaying more information on hover. However, we consider it good style to mention author last names if you discuss something at length and it fits into the flow well — the authors are human and it’s nice for them to have the community associate them with their work.</p> <hr/> <h2 id="footnotes">Footnotes</h2> <p>Just wrap the text you would like to show up in a footnote in a <code class="language-plaintext highlighter-rouge">&lt;d-footnote&gt;</code> tag. The number of the footnote will be automatically generated.<d-footnote>This will become a hoverable footnote.</d-footnote></p> <hr/> <h2 id="code-blocks">Code Blocks</h2> <p>Syntax highlighting is provided within <code class="language-plaintext highlighter-rouge">&lt;d-code&gt;</code> tags. An example of inline code snippets: <code class="language-plaintext highlighter-rouge">&lt;d-code language="html"&gt;let x = 10;&lt;/d-code&gt;</code>. For larger blocks of code, add a <code class="language-plaintext highlighter-rouge">block</code> attribute:</p> <d-code block="" language="javascript"> var x = 25; function(x) { return x * x; } </d-code> <p><strong>Note:</strong> <code class="language-plaintext highlighter-rouge">&lt;d-code&gt;</code> blocks do not look good in the dark mode. You can instead use the standard Jekyll syntax highlight with the <code class="language-plaintext highlighter-rouge">highlight</code> liquid tag.</p> <figure class="highlight"><pre><code class="language-javascript" data-lang="javascript"><span class="kd">var</span> <span class="nx">x</span> <span class="o">=</span> <span class="mi">25</span><span class="p">;</span>
+<span class="kd">function</span><span class="p">(</span><span class="nx">x</span><span class="p">)</span> <span class="p">{</span>
+<span class="k">return</span> <span class="nx">x</span> <span class="err">\</span><span class="o">*</span> <span class="nx">x</span><span class="p">;</span>
+<span class="p">}</span></code></pre></figure> <p>You can also write standard Markdown code blocks in triple ticks with a language tag, for instance:</p> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="k">def</span> <span class="nf">foo</span><span class="p">(</span><span class="n">x</span><span class="p">):</span>
+  <span class="k">return</span> <span class="n">x</span>
+</code></pre></div></div> <hr/> <h2 id="interactive-plots">Interactive Plots</h2> <p>You can add interative plots using plotly + iframes :framed_picture:</p> <div class="l-page"> <iframe src="/assets/plotly/demo.html" frameborder="0" scrolling="no" height="500px" width="100%" style="border: 1px dashed grey;"></iframe> </div> <p>The plot must be generated separately and saved into an HTML file. To generate the plot that you see above, you can use the following code snippet:</p> <figure class="highlight"><pre><code class="language-python" data-lang="python"><span class="kn">import</span> <span class="n">pandas</span> <span class="k">as</span> <span class="n">pd</span>
+<span class="kn">import</span> <span class="n">plotly.express</span> <span class="k">as</span> <span class="n">px</span>
+<span class="n">df</span> <span class="o">=</span> <span class="n">pd</span><span class="p">.</span><span class="nf">read_csv</span><span class="p">(</span>
+<span class="sh">'</span><span class="s">https://raw.githubusercontent.com/plotly/datasets/master/earthquakes-23k.csv</span><span class="sh">'</span>
+<span class="p">)</span>
+<span class="n">fig</span> <span class="o">=</span> <span class="n">px</span><span class="p">.</span><span class="nf">density_mapbox</span><span class="p">(</span>
+<span class="n">df</span><span class="p">,</span>
+<span class="n">lat</span><span class="o">=</span><span class="sh">'</span><span class="s">Latitude</span><span class="sh">'</span><span class="p">,</span>
+<span class="n">lon</span><span class="o">=</span><span class="sh">'</span><span class="s">Longitude</span><span class="sh">'</span><span class="p">,</span>
+<span class="n">z</span><span class="o">=</span><span class="sh">'</span><span class="s">Magnitude</span><span class="sh">'</span><span class="p">,</span>
+<span class="n">radius</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+<span class="n">center</span><span class="o">=</span><span class="nf">dict</span><span class="p">(</span><span class="n">lat</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">lon</span><span class="o">=</span><span class="mi">180</span><span class="p">),</span>
+<span class="n">zoom</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="n">mapbox_style</span><span class="o">=</span><span class="sh">"</span><span class="s">stamen-terrain</span><span class="sh">"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">fig</span><span class="p">.</span><span class="nf">show</span><span class="p">()</span>
+<span class="n">fig</span><span class="p">.</span><span class="nf">write_html</span><span class="p">(</span><span class="sh">'</span><span class="s">assets/plotly/demo.html</span><span class="sh">'</span><span class="p">)</span></code></pre></figure> <hr/> <h2 id="details-boxes">Details boxes</h2> <p>Details boxes are collapsible boxes which hide additional information from the user. They can be added with the <code class="language-plaintext highlighter-rouge">details</code> liquid tag:</p> <details><summary>Click here to know more</summary> <p>Additional details, where math \(2x - 1\) and <code class="language-plaintext highlighter-rouge">code</code> is rendered correctly.</p> </details> <hr/> <h2 id="mermaid">Mermaid</h2> <p>This theme supports creating diagrams directly in markdown using <a href="https://mermaid.js.org/">Mermaid</a>. Mermaid enables users to render flowcharts, sequence diagrams, class diagrams, Gantt charts, and more. Simply embed the diagram syntax within a mermaid code block.</p> <p>To create a Gantt chart, you can use the following syntax:</p> <div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">```</span><span class="nl">mermaid
+</span><span class="sb">gantt
+    dateFormat  YYYY-MM-DD
+    title A Gantt Diagram
 
-<span class="cp">{%</span><span class="w"> </span><span class="nt">tab</span><span class="w"> </span><span class="nv">group-name</span><span class="w"> </span><span class="nv">tab-name-1</span><span class="w"> </span><span class="cp">%}</span>
-
-Content 1
-
-<span class="cp">{%</span><span class="w"> </span><span class="nt">endtab</span><span class="w"> </span><span class="cp">%}</span>
-
-<span class="cp">{%</span><span class="w"> </span><span class="nt">tab</span><span class="w"> </span><span class="nv">group-name</span><span class="w"> </span><span class="nv">tab-name-2</span><span class="w"> </span><span class="cp">%}</span>
-
-Content 2
-
-<span class="cp">{%</span><span class="w"> </span><span class="nt">endtab</span><span class="w"> </span><span class="cp">%}</span>
-
-<span class="cp">{%</span><span class="w"> </span><span class="nt">endtabs</span><span class="w"> </span><span class="cp">%}</span>
-</code></pre></div></div> <p>With this you can generate visualizations like:</p> <ul id="log" class="tab" data-tab="a633cac0-3c4c-4810-8e77-4ae648430353" data-name="log"> <li class="active" id="log-php"> <a href="#">php </a> </li> <li id="log-js"> <a href="#">js </a> </li> <li id="log-ruby"> <a href="#">ruby </a> </li> </ul> <ul class="tab-content" id="a633cac0-3c4c-4810-8e77-4ae648430353" data-name="log"> <li class="active"> <div class="language-php highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nb">var_dump</span><span class="p">(</span><span class="s1">'hello'</span><span class="p">);</span>
-</code></pre></div></div> </li> <li> <div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">console</span><span class="p">.</span><span class="nf">log</span><span class="p">(</span><span class="dl">"</span><span class="s2">hello</span><span class="dl">"</span><span class="p">);</span>
-</code></pre></div></div> </li> <li> <div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nx">pputs</span> <span class="dl">'</span><span class="s1">hello</span><span class="dl">'</span>
-</code></pre></div></div> </li> </ul> <h2 id="another-example">Another example</h2> <ul id="data-struct" class="tab" data-tab="ae81c9d3-c707-4968-a0eb-fa4f8271dcf3" data-name="data-struct"> <li class="active" id="data-struct-yaml"> <a href="#">yaml </a> </li> <li id="data-struct-json"> <a href="#">json </a> </li> </ul> <ul class="tab-content" id="ae81c9d3-c707-4968-a0eb-fa4f8271dcf3" data-name="data-struct"> <li class="active"> <div class="language-yaml highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="na">hello</span><span class="pi">:</span>
-  <span class="pi">-</span> <span class="s2">"</span><span class="s">whatsup"</span>
-  <span class="pi">-</span> <span class="s2">"</span><span class="s">hi"</span>
-</code></pre></div></div> </li> <li> <div class="language-json highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">{</span><span class="w">
-  </span><span class="nl">"hello"</span><span class="p">:</span><span class="w"> </span><span class="p">[</span><span class="s2">"whatsup"</span><span class="p">,</span><span class="w"> </span><span class="s2">"hi"</span><span class="p">]</span><span class="w">
-</span><span class="p">}</span><span class="w">
-</span></code></pre></div></div> </li> </ul> <h2 id="tabs-for-something-else">Tabs for something else</h2> <ul id="something-else" class="tab" data-tab="9759cccc-8458-47cc-afd6-9076fea2922a" data-name="something-else"> <li class="active" id="something-else-text"> <a href="#">text </a> </li> <li id="something-else-quote"> <a href="#">quote </a> </li> <li id="something-else-list"> <a href="#">list </a> </li> </ul> <ul class="tab-content" id="9759cccc-8458-47cc-afd6-9076fea2922a" data-name="something-else"> <li class="active"> <p>Regular text</p> </li> <li> <blockquote> <p>A quote</p> </blockquote> </li> <li> <p>Hipster list</p> <ul> <li>brunch</li> <li>fixie</li> <li>raybans</li> <li>messenger bag</li> </ul> </li> </ul>]]></content><author><name></name></author><category term="sample-posts"/><category term="formatting"/><category term="code"/><summary type="html"><![CDATA[this is what included tabs in a post could look like]]></summary></entry><entry><title type="html">a post with typograms</title><link href="https://siaahmadi.github.io/blog/2024/typograms/" rel="alternate" type="text/html" title="a post with typograms"/><published>2024-04-29T23:36:10+00:00</published><updated>2024-04-29T23:36:10+00:00</updated><id>https://siaahmadi.github.io/blog/2024/typograms</id><content type="html" xml:base="https://siaahmadi.github.io/blog/2024/typograms/"><![CDATA[<p>This is an example post with some <a href="https://github.com/google/typograms/">typograms</a> code.</p> <div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">```</span><span class="nl">typograms
-</span><span class="sb">+----+
-|    |---&gt; My first diagram!
-+----+</span>
+    section Section
+    Task A           :a1, 2025-01-01, 30d
+    Task B           :after a1, 20d
+    Task C           :2025-01-10, 12d</span>
 <span class="p">```</span>
-</code></pre></div></div> <p>Which generates:</p> <pre><code class="language-typograms">+----+
-|    |---&gt; My first diagram!
-+----+
-</code></pre> <p>Another example:</p> <div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">```</span><span class="nl">typograms
-</span><span class="sb">.------------------------.
-|.----------------------.|
-||"https://example.com" ||
-|'----------------------'|
-| ______________________ |
-||                      ||
-||   Welcome!           ||
-||                      ||
-||                      ||
-||  .----------------.  ||
-||  | username       |  ||
-||  '----------------'  ||
-||  .----------------.  ||
-||  |"*******"       |  ||
-||  '----------------'  ||
-||                      ||
-||  .----------------.  ||
-||  |   "Sign-up"    |  ||
-||  '----------------'  ||
-||                      ||
-|+----------------------+|
-.------------------------.</span>
+</code></pre></div></div> <p>And here’s how it will be rendered:</p> <pre><code class="language-mermaid">gantt
+    dateFormat  YYYY-MM-DD
+    title A Gantt Diagram
+
+    section Section
+    Task A           :a1, 2025-01-01, 30d
+    Task B           :after a1, 20d
+    Task C           :2025-01-10, 12d
+</code></pre> <p>Similarly, you can also use it to create beautiful class diagrams:</p> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>```mermaid
+classDiagram
+direction LR
+    class Animal {
+        +String species
+        +int age
+        +makeSound()
+    }
+    class Dog {
+        +String breed
+        +bark()
+    }
+    class Cat {
+        +String color
+        +meow()
+    }
+    class Bird {
+        +String wingSpan
+        +fly()
+    }
+    class Owner {
+        +String name
+        +int age
+        +adoptAnimal(Animal animal)
+    }
+
+    Animal &lt;|-- Dog
+    Animal &lt;|-- Cat
+    Animal &lt;|-- Bird
+    Owner "1" --&gt; "0..*" Animal
+
+    Dog : +fetch()
+    Cat : +purr()
+    Bird : +sing()
+```
+</code></pre></div></div> <p>It will be presented as:</p> <pre><code class="language-mermaid">classDiagram
+direction LR
+    class Animal {
+        +String species
+        +int age
+        +makeSound()
+    }
+    class Dog {
+        +String breed
+        +bark()
+    }
+    class Cat {
+        +String color
+        +meow()
+    }
+    class Bird {
+        +String wingSpan
+        +fly()
+    }
+    class Owner {
+        +String name
+        +int age
+        +adoptAnimal(Animal animal)
+    }
+
+    Animal &lt;|-- Dog
+    Animal &lt;|-- Cat
+    Animal &lt;|-- Bird
+    Owner "1" --&gt; "0..*" Animal
+
+    Dog : +fetch()
+    Cat : +purr()
+    Bird : +sing()
+</code></pre> <p>With Mermaid, you can easily add clear and dynamic diagrams to enhance your blog content.</p> <hr/> <h2 id="diff2html">Diff2Html</h2> <p>This theme also supports integrating <a href="https://github.com/rtfpessoa/diff2html">Diff2Html</a>, a tool that beautifully renders code differences (diffs) directly in markdown. Diff2Html is ideal for showcasing code changes, allowing you to clearly present additions, deletions, and modifications. It’s perfect for code reviews, documentation, and tutorials where step-by-step code changes need to be highlighted—you can even introduce changes across multiple files at once.</p> <div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">```</span><span class="nl">diff2html
+</span><span class="sb">diff --git a/utils/mathUtils.js b/utils/mathUtils.js
+index 3b5f3d1..c7f9b2e 100644
+--- a/utils/mathUtils.js
++++ b/utils/mathUtils.js
+@@ -1,8 +1,12 @@
+-// Basic math utilities
++// Extended math utilities with additional functions
+
+-export function calculateArea(radius) {
+-    const PI = 3.14159;
++export function calculateCircleMetrics(radius) {
++    const PI = Math.PI;
+     const area = PI * radius ** 2;
++    const circumference = 2 * PI * radius;
++
++    if (!isValidRadius(radius)) throw new Error("Invalid radius");
++
+     return { area, circumference };
+ }
+
+-export function validateRadius(radius) {
++export function isValidRadius(radius) {
+     return typeof radius === 'number' &amp;&amp; radius &gt; 0;
+ }
+
+diff --git a/main.js b/main.js
+index 5f6a9c3..b7d4e8f 100644
+--- a/main.js
++++ b/main.js
+@@ -2,9 +2,12 @@
+ import { calculateCircleMetrics } from './utils/mathUtils';
+
+-function displayCircleMetrics(radius) {
+-    const { area } = calculateCircleMetrics(radius);
++function displayCircleMetrics(radius) {
++    const { area, circumference } = calculateCircleMetrics(radius);
+     console.log(`Area: ${area}`);
++    console.log(`Circumference: ${circumference}`);
+ }
+
+-displayCircleMetrics(5);
++try {
++    displayCircleMetrics(5);
++} catch (error) {
++    console.error("Error:", error.message);
++}</span>
 <span class="p">```</span>
-</code></pre></div></div> <p>which generates:</p> <pre><code class="language-typograms">.------------------------.
-|.----------------------.|
-||"https://example.com" ||
-|'----------------------'|
-| ______________________ |
-||                      ||
-||   Welcome!           ||
-||                      ||
-||                      ||
-||  .----------------.  ||
-||  | username       |  ||
-||  '----------------'  ||
-||  .----------------.  ||
-||  |"*******"       |  ||
-||  '----------------'  ||
-||                      ||
-||  .----------------.  ||
-||  |   "Sign-up"    |  ||
-||  '----------------'  ||
-||                      ||
-|+----------------------+|
-.------------------------.
-</code></pre> <p>For more examples, check out the <a href="https://google.github.io/typograms/#examples">typograms documentation</a>.</p>]]></content><author><name></name></author><category term="sample-posts"/><category term="formatting"/><category term="diagrams"/><summary type="html"><![CDATA[this is what included typograms code could look like]]></summary></entry><entry><title type="html">a post that can be cited</title><link href="https://siaahmadi.github.io/blog/2024/post-citation/" rel="alternate" type="text/html" title="a post that can be cited"/><published>2024-04-28T15:06:00+00:00</published><updated>2024-04-28T15:06:00+00:00</updated><id>https://siaahmadi.github.io/blog/2024/post-citation</id><content type="html" xml:base="https://siaahmadi.github.io/blog/2024/post-citation/"><![CDATA[<p>This is an example post that can be cited. The content of the post ends here, while the citation information is automatically provided below. The only thing needed is for you to set the <code class="language-plaintext highlighter-rouge">citation</code> key in the front matter to <code class="language-plaintext highlighter-rouge">true</code>.</p>]]></content><author><name></name></author><category term="sample-posts"/><category term="formatting"/><category term="citation"/><summary type="html"><![CDATA[this is what a post that can be cited looks like]]></summary></entry></feed>
+</code></pre></div></div> <p>Here’s how it will look when rendered with Diff2Html:</p> <pre><code class="language-diff2html">diff --git a/utils/mathUtils.js b/utils/mathUtils.js
+index 3b5f3d1..c7f9b2e 100644
+--- a/utils/mathUtils.js
++++ b/utils/mathUtils.js
+@@ -1,8 +1,12 @@
+-// Basic math utilities
++// Extended math utilities with additional functions
+
+-export function calculateArea(radius) {
+-    const PI = 3.14159;
++export function calculateCircleMetrics(radius) {
++    const PI = Math.PI;
+     const area = PI * radius ** 2;
++    const circumference = 2 * PI * radius;
++
++    if (!isValidRadius(radius)) throw new Error("Invalid radius");
++
+     return { area, circumference };
+ }
+
+-export function validateRadius(radius) {
++export function isValidRadius(radius) {
+     return typeof radius === 'number' &amp;&amp; radius &gt; 0;
+ }
+
+diff --git a/main.js b/main.js
+index 5f6a9c3..b7d4e8f 100644
+--- a/main.js
++++ b/main.js
+@@ -2,9 +2,12 @@
+ import { calculateCircleMetrics } from './utils/mathUtils';
+
+-function displayCircleMetrics(radius) {
+-    const { area } = calculateCircleMetrics(radius);
++function displayCircleMetrics(radius) {
++    const { area, circumference } = calculateCircleMetrics(radius);
+     console.log(`Area: ${area}`);
++    console.log(`Circumference: ${circumference}`);
+ }
+
+-displayCircleMetrics(5);
++try {
++    displayCircleMetrics(5);
++} catch (error) {
++    console.error("Error:", error.message);
++}
+</code></pre> <hr/> <h2 id="leaflet">Leaflet</h2> <p><a href="https://leafletjs.com/">Leaflet</a> is created by Ukrainian software engineer <a href="https://agafonkin.com/">Volodymyr Agafonkin</a>, allowing interactive maps to be embedded in webpages. With support for <a href="https://geojson.org/">GeoJSON data</a>, Leaflet allows you to highlight specific regions, making it easy to visualize geographical information in detail.</p> <p>You can use the following code to load map information on <a href="https://www.openstreetmap.org/">OpenStreetMap</a>:</p> <div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="p">```</span><span class="nl">geojson
+</span><span class="sb">{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Crimea",
+        "popupContent": "Occupied Crimea"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              33.9,
+              45.3
+            ],
+            [
+              36.5,
+              45.3
+            ],
+            [
+              36.5,
+              44.4
+            ],
+            [
+              33.9,
+              44.4
+            ],
+            [
+              33.9,
+              45.3
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Donetsk",
+        "popupContent": "Occupied Donetsk"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              37.5,
+              48.5
+            ],
+            [
+              39.5,
+              48.5
+            ],
+            [
+              39.5,
+              47.5
+            ],
+            [
+              37.5,
+              47.5
+            ],
+            [
+              37.5,
+              48.5
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Luhansk",
+        "popupContent": "Occupied Luhansk"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              38.5,
+              49.5
+            ],
+            [
+              40.5,
+              49.5
+            ],
+            [
+              40.5,
+              48.5
+            ],
+            [
+              38.5,
+              48.5
+            ],
+            [
+              38.5,
+              49.5
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Kherson",
+        "popupContent": "Occupied Kherson"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              32.3,
+              47.3
+            ],
+            [
+              34.3,
+              47.3
+            ],
+            [
+              34.3,
+              46.3
+            ],
+            [
+              32.3,
+              46.3
+            ],
+            [
+              32.3,
+              47.3
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Zaporizhzhia",
+        "popupContent": "Occupied Zaporizhzhia"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              34.3,
+              48
+            ],
+            [
+              36.3,
+              48
+            ],
+            [
+              36.3,
+              47
+            ],
+            [
+              34.3,
+              47
+            ],
+            [
+              34.3,
+              48
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}</span>
+<span class="p">```</span>
+</code></pre></div></div> <p>The rendered map below highlights the regions of Ukraine that have been illegally occupied by Russia over the years, including Crimea and the four eastern regions:</p> <pre><code class="language-geojson">{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Crimea",
+        "popupContent": "Occupied Crimea"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              33.9,
+              45.3
+            ],
+            [
+              36.5,
+              45.3
+            ],
+            [
+              36.5,
+              44.4
+            ],
+            [
+              33.9,
+              44.4
+            ],
+            [
+              33.9,
+              45.3
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Donetsk",
+        "popupContent": "Occupied Donetsk"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              37.5,
+              48.5
+            ],
+            [
+              39.5,
+              48.5
+            ],
+            [
+              39.5,
+              47.5
+            ],
+            [
+              37.5,
+              47.5
+            ],
+            [
+              37.5,
+              48.5
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Luhansk",
+        "popupContent": "Occupied Luhansk"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              38.5,
+              49.5
+            ],
+            [
+              40.5,
+              49.5
+            ],
+            [
+              40.5,
+              48.5
+            ],
+            [
+              38.5,
+              48.5
+            ],
+            [
+              38.5,
+              49.5
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Kherson",
+        "popupContent": "Occupied Kherson"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              32.3,
+              47.3
+            ],
+            [
+              34.3,
+              47.3
+            ],
+            [
+              34.3,
+              46.3
+            ],
+            [
+              32.3,
+              46.3
+            ],
+            [
+              32.3,
+              47.3
+            ]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": {
+        "name": "Zaporizhzhia",
+        "popupContent": "Occupied Zaporizhzhia"
+      },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [
+              34.3,
+              48
+            ],
+            [
+              36.3,
+              48
+            ],
+            [
+              36.3,
+              47
+            ],
+            [
+              34.3,
+              47
+            ],
+            [
+              34.3,
+              48
+            ]
+          ]
+        ]
+      }
+    }
+  ]
+}
+</code></pre> <hr/> <h2 id="chartjs-echarts-and-vega-lite">Chartjs, Echarts and Vega-Lite</h2> <p><a href="https://www.chartjs.org/">Chart.js</a> is a versatile JavaScript library for creating responsive and interactive charts. Supporting multiple chart types like bar, line, pie, and radar, it’s an ideal tool for visualizing data directly in webpages.</p> <p>Here’s an example of a JSON-style configuration that creates a bar chart in Chart.js:</p> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>```chartjs
+{
+  "type": "bar",
+  "data": {
+    "labels": ["2017", "2018", "2019", "2020", "2021"],
+    "datasets": [
+      {
+        "label": "Population (millions)",
+        "data": [12, 15, 13, 14, 16],
+        "backgroundColor": "rgba(54, 162, 235, 0.6)",
+        "borderColor": "rgba(54, 162, 235, 1)",
+        "borderWidth": 1
+      }
+    ]
+  },
+  "options": {
+    "scales": {
+      "y": {
+        "beginAtZero": true
+      }
+    }
+  }
+}
+```
+</code></pre></div></div> <p>The rendered bar chart illustrates population data from 2017 to 2021:</p> <pre><code class="language-chartjs">{
+  "type": "bar",
+  "data": {
+    "labels": ["2017", "2018", "2019", "2020", "2021"],
+    "datasets": [
+      {
+        "label": "Population (millions)",
+        "data": [12, 15, 13, 14, 16],
+        "backgroundColor": "rgba(54, 162, 235, 0.6)",
+        "borderColor": "rgba(54, 162, 235, 1)",
+        "borderWidth": 1
+      }
+    ]
+  },
+  "options": {
+    "scales": {
+      "y": {
+        "beginAtZero": true
+      }
+    }
+  }
+}
+</code></pre> <hr/> <p><a href="https://echarts.apache.org/">ECharts</a> is a powerful visualization library from <a href="https://www.apache.org/">Apache</a> that supports a wide range of interactive charts, including more advanced types such as scatter plots, heatmaps, and geographic maps.</p> <p>The following JSON configuration creates a visually enhanced line chart that displays monthly sales data for two products.</p> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>```echarts
+{
+  "title": {
+    "text": "Monthly Sales Comparison",
+    "left": "center"
+  },
+  "tooltip": {
+    "trigger": "axis",
+    "backgroundColor": "rgba(50, 50, 50, 0.7)",
+    "borderColor": "#777",
+    "borderWidth": 1,
+    "textStyle": {
+      "color": "#fff"
+    }
+  },
+  "legend": {
+    "data": ["Product A", "Product B"],
+    "top": "10%"
+  },
+  "xAxis": {
+    "type": "category",
+    "data": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    "axisLine": {
+      "lineStyle": {
+        "color": "#888"
+      }
+    }
+  },
+  "yAxis": {
+    "type": "value",
+    "axisLine": {
+      "lineStyle": {
+        "color": "#888"
+      }
+    },
+    "splitLine": {
+      "lineStyle": {
+        "type": "dashed"
+      }
+    }
+  },
+  "series": [
+    {
+      "name": "Product A",
+      "type": "line",
+      "smooth": true,
+      "data": [820, 932, 901, 934, 1290, 1330, 1320, 1400, 1450, 1500, 1600, 1650],
+      "itemStyle": {
+        "color": "#5470C6"
+      },
+      "lineStyle": {
+        "width": 3
+      },
+      "areaStyle": {
+        "color": {
+          "type": "linear",
+          "x": 0,
+          "y": 0,
+          "x2": 0,
+          "y2": 1,
+          "colorStops": [
+            { "offset": 0, "color": "rgba(84, 112, 198, 0.5)" },
+            { "offset": 1, "color": "rgba(84, 112, 198, 0)" }
+          ]
+        }
+      },
+      "emphasis": {
+        "focus": "series"
+      }
+    },
+    {
+      "name": "Product B",
+      "type": "line",
+      "smooth": true,
+      "data": [620, 732, 701, 734, 1090, 1130, 1120, 1200, 1250, 1300, 1400, 1450],
+      "itemStyle": {
+        "color": "#91CC75"
+      },
+      "lineStyle": {
+        "width": 3
+      },
+      "areaStyle": {
+        "color": {
+          "type": "linear",
+          "x": 0,
+          "y": 0,
+          "x2": 0,
+          "y2": 1,
+          "colorStops": [
+            { "offset": 0, "color": "rgba(145, 204, 117, 0.5)" },
+            { "offset": 1, "color": "rgba(145, 204, 117, 0)" }
+          ]
+        }
+      },
+      "emphasis": {
+        "focus": "series"
+      }
+    }
+  ]
+}
+```
+</code></pre></div></div> <p>The rendered output is shown below, and you can also interact with it using your mouse:</p> <pre><code class="language-echarts">{
+  "title": {
+    "text": "Monthly Sales Comparison",
+    "left": "center"
+  },
+  "tooltip": {
+    "trigger": "axis",
+    "backgroundColor": "rgba(50, 50, 50, 0.7)",
+    "borderColor": "#777",
+    "borderWidth": 1,
+    "textStyle": {
+      "color": "#fff"
+    }
+  },
+  "legend": {
+    "data": ["Product A", "Product B"],
+    "top": "10%"
+  },
+  "xAxis": {
+    "type": "category",
+    "data": ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+    "axisLine": {
+      "lineStyle": {
+        "color": "#888"
+      }
+    }
+  },
+  "yAxis": {
+    "type": "value",
+    "axisLine": {
+      "lineStyle": {
+        "color": "#888"
+      }
+    },
+    "splitLine": {
+      "lineStyle": {
+        "type": "dashed"
+      }
+    }
+  },
+  "series": [
+    {
+      "name": "Product A",
+      "type": "line",
+      "smooth": true,
+      "data": [820, 932, 901, 934, 1290, 1330, 1320, 1400, 1450, 1500, 1600, 1650],
+      "itemStyle": {
+        "color": "#5470C6"
+      },
+      "lineStyle": {
+        "width": 3
+      },
+      "areaStyle": {
+        "color": {
+          "type": "linear",
+          "x": 0,
+          "y": 0,
+          "x2": 0,
+          "y2": 1,
+          "colorStops": [
+            { "offset": 0, "color": "rgba(84, 112, 198, 0.5)" },
+            { "offset": 1, "color": "rgba(84, 112, 198, 0)" }
+          ]
+        }
+      },
+      "emphasis": {
+        "focus": "series"
+      }
+    },
+    {
+      "name": "Product B",
+      "type": "line",
+      "smooth": true,
+      "data": [620, 732, 701, 734, 1090, 1130, 1120, 1200, 1250, 1300, 1400, 1450],
+      "itemStyle": {
+        "color": "#91CC75"
+      },
+      "lineStyle": {
+        "width": 3
+      },
+      "areaStyle": {
+        "color": {
+          "type": "linear",
+          "x": 0,
+          "y": 0,
+          "x2": 0,
+          "y2": 1,
+          "colorStops": [
+            { "offset": 0, "color": "rgba(145, 204, 117, 0.5)" },
+            { "offset": 1, "color": "rgba(145, 204, 117, 0)" }
+          ]
+        }
+      },
+      "emphasis": {
+        "focus": "series"
+      }
+    }
+  ]
+}
+</code></pre> <hr/> <p><a href="https://vega.github.io/vega-lite/">Vega-Lite</a> is a declarative visualization grammar that allows users to create, share, and customize a wide range of interactive data visualizations. The following JSON configuration generates a straightforward bar chart:</p> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>```vega_lite
+{
+  "$schema": "https://vega.github.io/schema/vega/v5.json",
+  "width": 400,
+  "height": 200,
+  "padding": 5,
+
+  "data": [
+    {
+      "name": "table",
+      "values": [
+        {"category": "A", "value": 28},
+        {"category": "B", "value": 55},
+        {"category": "C", "value": 43},
+        {"category": "D", "value": 91},
+        {"category": "E", "value": 81},
+        {"category": "F", "value": 53},
+        {"category": "G", "value": 19},
+        {"category": "H", "value": 87}
+      ]
+    }
+  ],
+
+  "scales": [
+    {
+      "name": "xscale",
+      "type": "band",
+      "domain": {"data": "table", "field": "category"},
+      "range": "width",
+      "padding": 0.1
+    },
+    {
+      "name": "yscale",
+      "type": "linear",
+      "domain": {"data": "table", "field": "value"},
+      "nice": true,
+      "range": "height"
+    }
+  ],
+
+  "axes": [
+    {"orient": "bottom", "scale": "xscale"},
+    {"orient": "left", "scale": "yscale"}
+  ],
+
+  "marks": [
+    {
+      "type": "rect",
+      "from": {"data": "table"},
+      "encode": {
+        "enter": {
+          "x": {"scale": "xscale", "field": "category"},
+          "width": {"scale": "xscale", "band": 0.8},
+          "y": {"scale": "yscale", "field": "value"},
+          "y2": {"scale": "yscale", "value": 0},
+          "fill": {"value": "steelblue"}
+        },
+        "update": {
+          "fillOpacity": {"value": 1}
+        },
+        "hover": {
+          "fill": {"value": "orange"}
+        }
+      }
+    }
+  ]
+}
+```
+</code></pre></div></div> <p>The rendered output shows a clean and simple bar chart with a hover effect：</p> <pre><code class="language-vega_lite">{
+  "$schema": "https://vega.github.io/schema/vega/v5.json",
+  "width": 400,
+  "height": 200,
+  "padding": 5,
+
+  "data": [
+    {
+      "name": "table",
+      "values": [
+        {"category": "A", "value": 28},
+        {"category": "B", "value": 55},
+        {"category": "C", "value": 43},
+        {"category": "D", "value": 91},
+        {"category": "E", "value": 81},
+        {"category": "F", "value": 53},
+        {"category": "G", "value": 19},
+        {"category": "H", "value": 87}
+      ]
+    }
+  ],
+
+  "scales": [
+    {
+      "name": "xscale",
+      "type": "band",
+      "domain": {"data": "table", "field": "category"},
+      "range": "width",
+      "padding": 0.1
+    },
+    {
+      "name": "yscale",
+      "type": "linear",
+      "domain": {"data": "table", "field": "value"},
+      "nice": true,
+      "range": "height"
+    }
+  ],
+
+  "axes": [
+    {"orient": "bottom", "scale": "xscale"},
+    {"orient": "left", "scale": "yscale"}
+  ],
+
+  "marks": [
+    {
+      "type": "rect",
+      "from": {"data": "table"},
+      "encode": {
+        "enter": {
+          "x": {"scale": "xscale", "field": "category"},
+          "width": {"scale": "xscale", "band": 0.8},
+          "y": {"scale": "yscale", "field": "value"},
+          "y2": {"scale": "yscale", "value": 0},
+          "fill": {"value": "steelblue"}
+        },
+        "update": {
+          "fillOpacity": {"value": 1}
+        },
+        "hover": {
+          "fill": {"value": "orange"}
+        }
+      }
+    }
+  ]
+}
+</code></pre> <hr/> <h2 id="tikz">TikZ</h2> <p><a href="https://tikz.net/">TikZ</a> is a powerful LaTeX-based drawing tool powered by <a href="https://tikzjax.com/">TikZJax</a>. You can easily port TikZ drawings from papers, posters, and notes. For example, we can use the following code to illustrate Euler’s formula $ e^{i \theta} = \cos \theta + i \sin \theta $:</p> <div class="language-markdown highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;script </span><span class="na">type=</span><span class="s">"text/tikz"</span><span class="nt">&gt;</span>
+<span class="se">\b</span>egin{document}
+  <span class="se">\b</span>egin{tikzpicture}
+      <span class="se">\f</span>illdraw[fill=cyan!10, draw=blue, thick] (0,0) circle (2cm);<span class="sb">
+
+      \draw[-&gt;, thick] (-2.5,0) -- (2.5,0) node[right] {Re};
+      \draw[-&gt;, thick] (0,-2.5) -- (0,2.5) node[above] {Im};
+
+      \draw[-&gt;, thick, color=purple] (0,0) -- (1.5,1.5);
+      \node[color=purple] at (1.1, 1.7) {$e^{i\theta}$};
+
+      \draw[thick] (0.7,0) arc (0:45:0.7);
+      \node at (0.9, 0.3) {$\theta$};
+
+      \draw[dashed, color=gray] (1.5,1.5) -- (1.5,0) node[below, black] {$\cos \theta$};
+      \draw[dashed, color=gray] (1.5,1.5) -- (0,1.5) node[left, black] {$\sin \theta$};
+      \node at (2.2, 0) [below] {1};
+      \node at (0, 2.2) [left] {$i$};
+      \node at (1.5,1.5) [above right, color=blue] {$(\cos \theta \, \sin \theta)$};
+</span>  <span class="se">\e</span>nd{tikzpicture}
+<span class="se">\e</span>nd{document}
+<span class="nt">&lt;/script&gt;</span>
+</code></pre></div></div> <p>The rendered output is shown below, displayed as a vector graphic：</p> <script type="text/tikz">
+\begin{document}
+  \begin{tikzpicture}
+      \filldraw[fill=cyan!10, draw=blue, thick] (0,0) circle (2cm);
+
+      \draw[->, thick] (-2.5,0) -- (2.5,0) node[right] {Re};
+      \draw[->, thick] (0,-2.5) -- (0,2.5) node[above] {Im};
+
+      \draw[->, thick, color=purple] (0,0) -- (1.5,1.5);
+      \node[color=purple] at (1.1, 1.7) {$e^{i\theta}$};
+
+      \draw[thick] (0.7,0) arc (0:45:0.7);
+      \node at (0.9, 0.3) {$\theta$};
+
+      \draw[dashed, color=gray] (1.5,1.5) -- (1.5,0) node[below, black] {$\cos \theta$};
+      \draw[dashed, color=gray] (1.5,1.5) -- (0,1.5) node[left, black] {$\sin \theta$};
+      \node at (2.2, 0) [below] {1};
+      \node at (0, 2.2) [left] {$i$};
+      \node at (1.5,1.5) [above right, color=blue] {$(\cos \theta \, \sin \theta)$};
+  \end{tikzpicture}
+\end{document}
+</script> <hr/> <h2 id="typograms">Typograms</h2> <p><a href="https://google.github.io/typograms/">Typograms</a> are a way of combining text and graphics to convey information in a clear and visually engaging manner. Typograms are particularly effective for illustrating simple diagrams, charts, and concept visuals where text and graphics are closely integrated. The following example demonstrates a simple Typogram:</p> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>```typograms
+             ___________________
+            /                  /|
+           /__________________/ |
+          |                  |  |
+          |     Distill      |  |
+          |                  |  |
+          |                  | /
+          |__________________|/
+```
+</code></pre></div></div> <p>The rendered output is shown below：</p> <pre><code class="language-typograms">             ___________________
+            /                  /|
+           /__________________/ |
+          |                  |  |
+          |     Distill      |  |
+          |                  |  |
+          |                  | /
+          |__________________|/
+</code></pre> <hr/> <h2 id="layouts">Layouts</h2> <p>The main text column is referred to as the body. It is the assumed layout of any direct descendants of the <code class="language-plaintext highlighter-rouge">d-article</code> element.</p> <div class="fake-img l-body"> <p>.l-body</p> </div> <p>For images you want to display a little larger, try <code class="language-plaintext highlighter-rouge">.l-page</code>:</p> <div class="fake-img l-page"> <p>.l-page</p> </div> <p>All of these have an outset variant if you want to poke out from the body text a little bit. For instance:</p> <div class="fake-img l-body-outset"> <p>.l-body-outset</p> </div> <div class="fake-img l-page-outset"> <p>.l-page-outset</p> </div> <p>Occasionally you’ll want to use the full browser width. For this, use <code class="language-plaintext highlighter-rouge">.l-screen</code>. You can also inset the element a little from the edge of the browser by using the inset variant.</p> <div class="fake-img l-screen"> <p>.l-screen</p> </div> <div class="fake-img l-screen-inset"> <p>.l-screen-inset</p> </div> <p>The final layout is for marginalia, asides, and footnotes. It does not interrupt the normal flow of <code class="language-plaintext highlighter-rouge">.l-body</code> sized text except on mobile screen sizes.</p> <div class="fake-img l-gutter"> <p>.l-gutter</p> </div> <hr/> <h2 id="sidenotes">Sidenotes</h2> <p>Distill supports sidenotes, which are like footnotes but placed in the margin of the page. They are useful for providing additional context or references without interrupting the flow of the main text.</p> <p>There are two main ways to create a sidenote:</p> <p><strong>Using the <code class="language-plaintext highlighter-rouge">&lt;aside&gt;</code> tag:</strong></p> <p>The following code creates a sidenote with <strong><em>distill’s styling</em></strong> in the margin:</p> <div class="language-html highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;aside&gt;&lt;p&gt;</span>This is a sidenote using aside tag.<span class="nt">&lt;/p&gt;&lt;/aside&gt;</span>
+</code></pre></div></div> <aside><p> This is a sidenote using `&lt;aside&gt;` tag</p> </aside> <p>We can also add images to sidenotes (click on the image to zoom in for a larger version):</p> <div class="language-html highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;aside&gt;</span>
+  {% include figure.liquid loading="eager" path="assets/img/rhino.png" class="img-fluid rounded z-depth-1" zoomable=true %}
+  <span class="nt">&lt;p&gt;</span>
+    F.J. Cole, “The History of Albrecht Dürer’s Rhinoceros in Zoological Literature,” Science, Medicine, and History: Essays on the Evolution of
+    Scientific Thought and Medical Practice (London, 1953), ed. E. Ashworth Underwood, 337-356. From page 71 of Edward Tufte’s Visual Explanations.
+  <span class="nt">&lt;/p&gt;</span>
+<span class="nt">&lt;/aside&gt;</span>
+</code></pre></div></div> <aside> <figure> <picture> <source class="responsive-img-srcset" srcset="/assets/img/rhino-480.webp 480w,/assets/img/rhino-800.webp 800w,/assets/img/rhino-1400.webp 1400w," type="image/webp" sizes="95vw"/> <img src="/assets/img/rhino.png" class="img-fluid rounded z-depth-1" width="100%" height="auto" data-zoomable="" loading="eager" onerror="this.onerror=null; $('.responsive-img-srcset').remove();"/> </picture> </figure> <p>F.J. Cole, “The History of Albrecht Dürer’s Rhinoceros in Zoological Literature,” Science, Medicine, and History: Essays on the Evolution of Scientific Thought and Medical Practice (London, 1953), ed. E. Ashworth Underwood, 337-356. From page 71 of Edward Tufte’s Visual Explanations.</p> </aside> <p>Sidenotes can also contain equations and links:</p> <p>In physics, mass–energy equivalence is the relationship between mass and energy in a system’s rest frame. The two differ only by a multiplicative constant and the units of measurement.</p> <aside> <p>This principle is defined by Einstein's famous equation: $E = mc^2$ <a href="https://en.wikipedia.org/wiki/Mass%E2%80%93energy_equivalence" target="_blank">(Source: Wikipedia)</a></p> </aside> <p><strong>Using the <code class="language-plaintext highlighter-rouge">l-gutter</code> class:</strong></p> <p>The following code creates a sidenote with <strong><em>al-folio’s styling</em></strong> in the margin:</p> <div class="language-html highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="nt">&lt;div</span> <span class="na">class=</span><span class="s">"l-gutter"</span><span class="nt">&gt;&lt;p&gt;</span>This is a sidenote using l-gutter class.<span class="nt">&lt;/p&gt;&lt;/div&gt;</span>
+</code></pre></div></div> <div class="l-gutter"> <p> This is a sidenote using `l-gutter` class. </p> </div> <hr/> <h2 id="other-typography">Other Typography?</h2> <p>Emphasis, aka italics, with <em>asterisks</em> (<code class="language-plaintext highlighter-rouge">*asterisks*</code>) or <em>underscores</em> (<code class="language-plaintext highlighter-rouge">_underscores_</code>).</p> <p>Strong emphasis, aka bold, with <strong>asterisks</strong> or <strong>underscores</strong>.</p> <p>Combined emphasis with <strong>asterisks and <em>underscores</em></strong>.</p> <p>Strikethrough uses two tildes. <del>Scratch this.</del></p> <ol> <li>First ordered list item</li> <li>Another item ⋅⋅* Unordered sub-list.</li> <li>Actual numbers don’t matter, just that it’s a number ⋅⋅1. Ordered sub-list</li> <li>And another item.</li> </ol> <p>⋅⋅⋅You can have properly indented paragraphs within list items. Notice the blank line above, and the leading spaces (at least one, but we’ll use three here to also align the raw Markdown).</p> <p>⋅⋅⋅To have a line break without a paragraph, you will need to use two trailing spaces.⋅⋅ ⋅⋅⋅Note that this line is separate, but within the same paragraph.⋅⋅ ⋅⋅⋅(This is contrary to the typical GFM line break behaviour, where trailing spaces are not required.)</p> <ul> <li> <p>Unordered list can use asterisks</p> </li> <li> <p>Or minuses</p> </li> <li> <p>Or pluses</p> </li> </ul> <p><a href="https://www.google.com">I’m an inline-style link</a></p> <p><a href="https://www.google.com" title="Google's Homepage">I’m an inline-style link with title</a></p> <p><a href="https://www.mozilla.org">I’m a reference-style link</a></p> <p><a href="https://slashdot.org">You can use numbers for reference-style link definitions</a></p> <p>Or leave it empty and use the <a href="https://www.reddit.com">link text itself</a>.</p> <p>URLs and URLs in angle brackets will automatically get turned into links. https://www.example.com or <a href="https://www.example.com">https://www.example.com</a> and sometimes example.com (but not on Github, for example).</p> <p>Some text to show that the reference links can follow later.</p> <p>Here’s our logo (hover to see the title text):</p> <p>Inline-style: <img src="https://github.com/adam-p/markdown-here/raw/master/src/common/images/icon48.png" alt="alt text" title="Logo Title Text 1"/></p> <p>Reference-style: <img src="https://github.com/adam-p/markdown-here/raw/master/src/common/images/icon48.png" alt="alt text" title="Logo Title Text 2"/></p> <p>Inline <code class="language-plaintext highlighter-rouge">code</code> has <code class="language-plaintext highlighter-rouge">back-ticks around</code> it.</p> <div class="language-javascript highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="kd">var</span> <span class="nx">s</span> <span class="o">=</span> <span class="dl">"</span><span class="s2">JavaScript syntax highlighting</span><span class="dl">"</span><span class="p">;</span>
+<span class="nf">alert</span><span class="p">(</span><span class="nx">s</span><span class="p">);</span>
+</code></pre></div></div> <div class="language-python highlighter-rouge"><div class="highlight"><pre class="highlight"><code><span class="n">s</span> <span class="o">=</span> <span class="sh">"</span><span class="s">Python syntax highlighting</span><span class="sh">"</span>
+<span class="k">print</span> <span class="n">s</span>
+</code></pre></div></div> <div class="language-plaintext highlighter-rouge"><div class="highlight"><pre class="highlight"><code>No language indicated, so no syntax highlighting.
+But let's throw in a &lt;b&gt;tag&lt;/b&gt;.
+</code></pre></div></div> <p>Colons can be used to align columns.</p> <table> <thead> <tr> <th>Tables</th> <th style="text-align: center">Are</th> <th style="text-align: right">Cool</th> </tr> </thead> <tbody> <tr> <td>col 3 is</td> <td style="text-align: center">right-aligned</td> <td style="text-align: right">$1600</td> </tr> <tr> <td>col 2 is</td> <td style="text-align: center">centered</td> <td style="text-align: right">$12</td> </tr> <tr> <td>zebra stripes</td> <td style="text-align: center">are neat</td> <td style="text-align: right">$1</td> </tr> </tbody> </table> <p>There must be at least 3 dashes separating each header cell. The outer pipes (|) are optional, and you don’t need to make the raw Markdown line up prettily. You can also use inline Markdown.</p> <table> <thead> <tr> <th>Markdown</th> <th>Less</th> <th>Pretty</th> </tr> </thead> <tbody> <tr> <td><em>Still</em></td> <td><code class="language-plaintext highlighter-rouge">renders</code></td> <td><strong>nicely</strong></td> </tr> <tr> <td>1</td> <td>2</td> <td>3</td> </tr> </tbody> </table> <blockquote> <p>Blockquotes are very handy in email to emulate reply text. This line is part of the same quote.</p> </blockquote> <p>Quote break.</p> <blockquote> <p>This is a very long line that will still be quoted properly when it wraps. Oh boy let’s keep writing to make sure this is long enough to actually wrap for everyone. Oh, you can <em>put</em> <strong>Markdown</strong> into a blockquote.</p> </blockquote> <p>Here’s a line for us to start with.</p> <p>This line is separated from the one above by two newlines, so it will be a <em>separate paragraph</em>.</p> <p>This line is also a separate paragraph, but… This line is only separated by a single newline, so it’s a separate line in the <em>same paragraph</em>.</p>]]></content><author><name>Siavash Ahmadi</name></author><category term="ai,"/><category term="llm,"/><category term="systems,"/><category term="optimization,"/><category term="transformer"/><summary type="html"><![CDATA[A brief presentation of the paper of the same name]]></summary></entry></feed>
