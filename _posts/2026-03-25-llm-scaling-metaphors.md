@@ -100,7 +100,7 @@ Since I don't have a subscription to ChatGPT, I thought maybe I'm not using the 
   
   **\"You can't drive a car at 600 mph by putting ten people in it.**
   
-  \"This version is useful for explaining that the \"engine\" (the core process or technology) has a maximum output regardless of the \"payload\" (the team size).
+  This version is useful for explaining that the \"engine\" (the core process or technology) has a maximum output regardless of the \"payload\" (the team size).
   
   **The \"Construction\" Reality\"**
   
@@ -124,11 +124,15 @@ Since I don't have a subscription to ChatGPT, I thought maybe I'm not using the 
   %}
 </div>
 
-Like ChatGPT, Gemini also understood the main intent of the original phrase. And like ChatGPT, it also fell in the trap of the number nine 😅.
+Like ChatGPT, Gemini also "understood" the main intent of the original phrase. And like ChatGPT, it also fell in the trap of the number nine 😅.
 
 I was quite amused by its car example: "You can't drive a car at 600 mph by putting ten people in it." 😂😂 It completely failed on the logic here. Or in the example "Can twelve winemakers make a ten-year vintage in one year?" it just mixed up a bunch of unrelated numbers and durations!
 
 So again, I learned some prompting lessons, and went back to Gemini Pro with a clean slate (started a new conversation). Here's how this one went. I'll spare you additional commentary but if you'd like a laugh, I encourage you to read it 😅.
+
+P.S. The sleep example is my favorite 🤣.
+
+P.S. 2: Also note how it's so confident that each example "works!"
 
 
 <div class="chat-container">
