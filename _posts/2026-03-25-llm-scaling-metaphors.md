@@ -130,9 +130,9 @@ I was quite amused by its car example: "You can't drive a car at 600 mph by putt
 
 So again, I learned some prompting lessons, and went back to Gemini Pro with a clean slate (started a new conversation). Here's how this one went. I'll spare you additional commentary but if you'd like a laugh, I encourage you to read it 😅.
 
-P.S. The sleep example is my favorite 🤣.
+P.S.: The sleep example is my favorite 🤣.
 
-P.S. 2: Also note how it's so confident that each example "works!"
+P.S. 2: Also note how it's so confident that each example "works!" Because you know... Everyone knows a cake takes about an hour to bake!!!
 
 
 <div class="chat-container">
