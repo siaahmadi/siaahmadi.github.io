@@ -146,35 +146,35 @@ Here are a few punchy, non-technical alternatives that use widely known timeline
 --
 
 1. **The Oven Example (The Most Intuitive)**
-**\"Can six ovens bake a cake in ten minutes?\"**
-**Why it works:** Everyone knows a cake takes about an hour to bake. If you try to bake it in ten minutes by \"parallelizing\" it across six ovens, you just end up with six cold pans of batter (or one burnt mess if you try to crank up the heat). It perfectly illustrates that the internal chemical process (like the logic of a project) requires its own time to \"set.\"
+  **\"Can six ovens bake a cake in ten minutes?\"**
+  **Why it works:** Everyone knows a cake takes about an hour to bake. If you try to bake it in ten minutes by \"parallelizing\" it across six ovens, you just end up with six cold pans of batter (or one burnt mess if you try to crank up the heat). It perfectly illustrates that the internal chemical process (like the logic of a project) requires its own time to \"set.\"
 
 --
 
 2. **The Movie Example (The Most Logical)**
-**\"Can four projectors finish a two-hour movie in thirty minutes?\"**
-**Why it works:** A movie is a purely linear experience. Even if you have the best technology and multiple people \"working\" on the playback, the story must unfold at its own pace for it to make sense. Watching the first 30 minutes on four different screens simultaneously doesn't mean you've \"seen the movie.\"
+  **\"Can four projectors finish a two-hour movie in thirty minutes?\"**
+  **Why it works:** A movie is a purely linear experience. Even if you have the best technology and multiple people \"working\" on the playback, the story must unfold at its own pace for it to make sense. Watching the first 30 minutes on four different screens simultaneously doesn't mean you've \"seen the movie.\"
 
 --
 
 3. The Pilot Example (The \"Transport\" Logic)
-\"Can ten pilots fly a five-hour flight in thirty minutes?\"
-**Why it works:** This highlights that the \"vessel\" (the project) is limited by its environment and physics. No matter how many experts you put in the cockpit, the plane cannot physically travel faster than its engine allows. Adding more pilots just crowds the cockpit without changing the arrival time.
+  \"Can ten pilots fly a five-hour flight in thirty minutes?\"
+  **Why it works:** This highlights that the \"vessel\" (the project) is limited by its environment and physics. No matter how many experts you put in the cockpit, the plane cannot physically travel faster than its engine allows. Adding more pilots just crowds the cockpit without changing the arrival time.
 
 --
 
 4. The Sleep Example (The Relatable Favorite)
-\"Can seven people sleep for you on Sunday so you can stay awake all week?\"
-**Why it works:** While a bit different in structure, it attacks the idea of \"banking\" or \"outsourcing\" a fundamental, sequential need. Everyone knows you need roughly 8 hours of sleep every night. You can’t parallelize your rest for the week into a single day just because you have \"extra hours\" available on Sunday.
+  \"Can seven people sleep for you on Sunday so you can stay awake all week?\"
+  **Why it works:** While a bit different in structure, it attacks the idea of \"banking\" or \"outsourcing\" a fundamental, sequential need. Everyone knows you need roughly 8 hours of sleep every night. You can’t parallelize your rest for the week into a single day just because you have \"extra hours\" available on Sunday.
 
 ---
 
 **Summary Table**
-Analogy	| The \"Man-Month\" Logic	| Why it's punchy
-**9 Women** |	9 × 1 month ≠ Baby | The classic \"biological\" constraint.
-**6 Ovens**	| 6 × 10 mins ≠ Cake | The \"chemical/process\" constraint.
-**4 Projectors** | 4 × 30 mins ≠ Movie | The \"linear content\" constraint.
-**10 Pilots** | 10 pilots ≠ Fast Flight | The \"physical/vessel\" constraint.
+  Analogy	| The \"Man-Month\" Logic	| Why it's punchy
+  **9 Women** |	9 × 1 month ≠ Baby | The classic \"biological\" constraint.
+  **6 Ovens**	| 6 × 10 mins ≠ Cake | The \"chemical/process\" constraint.
+  **4 Projectors** | 4 × 30 mins ≠ Movie | The \"linear content\" constraint.
+  **10 Pilots** | 10 pilots ≠ Fast Flight | The \"physical/vessel\" constraint.
 
 ---
 
@@ -194,16 +194,16 @@ Would you like me to help you draft a short presentation slide or a \"TL;DR\" em
 If you want that same universal, \"physics-says-no\" logic, try these:
 
 1. **The Sleep Analogy**
-**\"Can eight people each sleep for one hour to give you a full night's rest?\"**
-**Why it works:** Everyone knows a \"full night's rest\" is roughly eight hours. It’s a biological requirement that is inherently sequential; you cannot \"parallelize\" your exhaustion away by having others sleep on your behalf.
+ **\"Can eight people each sleep for one hour to give you a full night's rest?\"**
+ **Why it works:** Everyone knows a \"full night's rest\" is roughly eight hours. It’s a biological requirement that is inherently sequential; you cannot \"parallelize\" your exhaustion away by having others sleep on your behalf.
 
 2. **The Calendar Analogy**
-**\"Can seven people make it next Monday by tomorrow morning?\"**
-**Why it works:** It’s perfectly absurd. A week is seven days, and no amount of \"manpower\" or extra people living through the day can force the calendar to skip ahead. It highlights that some processes are simply passengers of time.
+ **\"Can seven people make it next Monday by tomorrow morning?\"**
+ **Why it works:** It’s perfectly absurd. A week is seven days, and no amount of \"manpower\" or extra people living through the day can force the calendar to skip ahead. It highlights that some processes are simply passengers of time.
 
 3. **The Song Analogy**
-**\"Can four people finish a three-minute song in forty-five seconds?\"**
-**Why it works:** A \"three-minute song\" is defined by its duration. If you play it four times faster, or have four people sing different parts simultaneously, you no longer have the song—you have noise. It perfectly captures the \"sequential logic\" requirement.
+ **\"Can four people finish a three-minute song in forty-five seconds?\"**
+ **Why it works:** A \"three-minute song\" is defined by its duration. If you play it four times faster, or have four people sing different parts simultaneously, you no longer have the song—you have noise. It perfectly captures the \"sequential logic\" requirement.
 
 Would you like me to tweak one of these into a one-sentence \"mic drop\" for your specific context?"
   %}
