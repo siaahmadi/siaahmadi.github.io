@@ -1,0 +1,44 @@
+{%- comment -%}
+  _includes/chat_message.html
+  ───────────────────────────
+  Renders a single chat bubble inside a .chat-container div.
+
+  PARAMETERS
+  ──────────
+  role     (required)  "user"  → right-aligned bubble (outgoing / human)
+                       "assistant" | "bot" | "left" → left-aligned (incoming)
+                       Any other value is treated as left-aligned.
+
+  content  (required)  The message text. Markdown is supported — wrap in
+                       quotes if it contains special characters.
+
+  name     (optional)  Label shown above the bubble (e.g. "You", "Claude",
+                       "Alice"). Omit to hide the author line entirely.
+
+  time     (optional)  Timestamp string shown beneath the bubble
+                       (e.g. "10:32 AM"). Omit to hide.
+
+  EXAMPLE
+  ───────
+  <div class="chat-container">
+    {% include chat_message.html role="user"      name="You"    content="Hey, what's 2 + 2?" %}
+    {% include chat_message.html role="assistant" name="Claude" content="It's **4**!" %}
+  </div>
+{%- endcomment -%}
+
+{%- assign _role = include.role | downcase -%}
+{%- if _role == "user" or _role == "right" -%}
+  {%- assign _side = "chat-right" -%}
+{%- else -%}
+  {%- assign _side = "chat-left" -%}
+{%- endif -%}
+
+<div class="chat-message {{ _side }}">
+  {%- if include.name %}
+  <div class="chat-author">{{ include.name }}</div>
+  {%- endif %}
+  <div class="chat-bubble">{{ include.content | markdownify }}</div>
+  {%- if include.time %}
+  <div class="chat-timestamp">{{ include.time }}</div>
+  {%- endif %}
+</div>

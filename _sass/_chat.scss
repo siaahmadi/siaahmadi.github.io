@@ -1,0 +1,133 @@
+// =============================================================================
+// Chat / Conversation Thread Styles
+// =============================================================================
+// Usage: wrap {% include chat_message.html %} calls inside a .chat-container
+// div in your blog post. See _includes/chat_message.html for the include API.
+
+.chat-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  margin: 1.5rem 0;
+  padding: 1.25rem 1rem;
+  background: var(--global-bg-color);
+  border: 1px solid var(--global-divider-color);
+  border-radius: 16px;
+  font-family: inherit;
+}
+
+// A single message row (bubble + optional avatar/name)
+.chat-message {
+  display: flex;
+  flex-direction: column;
+  max-width: 72%;
+
+  // Left-aligned: the "other" person (assistant, friend, model, etc.)
+  &.chat-left {
+    align-self: flex-start;
+    align-items: flex-start;
+  }
+
+  // Right-aligned: the "self" person (user, human, you)
+  &.chat-right {
+    align-self: flex-end;
+    align-items: flex-end;
+  }
+}
+
+// The name / role label shown above the bubble
+.chat-author {
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin-bottom: 0.2rem;
+  color: var(--global-text-color-light, #888888);
+
+  .chat-right & {
+    text-align: right;
+    color: var(--global-theme-color);
+    opacity: 0.8;
+  }
+}
+
+// The bubble itself
+.chat-bubble {
+  padding: 0.55rem 1rem;
+  border-radius: 18px;
+  line-height: 1.55;
+  font-size: 0.93rem;
+  word-break: break-word;
+
+  // Override the global paragraph color so it inherits properly inside bubbles
+  p {
+    color: inherit;
+    margin: 0;
+
+    & + p {
+      margin-top: 0.4rem;
+    }
+  }
+
+  // Inline code inside bubbles
+  code {
+    font-size: 0.85em;
+    padding: 0.1em 0.35em;
+    border-radius: 4px;
+  }
+
+  // ── Left bubble (incoming / assistant) ──────────────────────────────────
+  .chat-left & {
+    background: var(--global-code-bg-color);
+    color: var(--global-text-color);
+    border-bottom-left-radius: 4px;
+
+    code {
+      background: var(--global-divider-color);
+      color: var(--global-text-color);
+    }
+  }
+
+  // ── Right bubble (outgoing / user) ──────────────────────────────────────
+  .chat-right & {
+    background: var(--global-theme-color);
+    color: #ffffff;
+    border-bottom-right-radius: 4px;
+
+    // Lighten code blocks inside the accent-color bubble
+    code {
+      background: rgba(255, 255, 255, 0.25);
+      color: #ffffff;
+    }
+  }
+}
+
+// Optional timestamp line beneath a bubble
+.chat-timestamp {
+  font-size: 0.68rem;
+  color: var(--global-text-color-light, #aaaaaa);
+  margin-top: 0.15rem;
+
+  .chat-right & {
+    text-align: right;
+  }
+}
+
+// Thin horizontal divider — useful to separate conversation turns or days
+.chat-divider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.5rem 0;
+  color: var(--global-text-color-light, #aaaaaa);
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+
+  &::before,
+  &::after {
+    content: "";
+    flex: 1;
+    border-top: 1px solid var(--global-divider-color);
+  }
+}
