@@ -208,7 +208,7 @@ Would you like me to tweak one of these into a one-sentence \"mic drop\" for you
   %}
   {% include chat_message.html
   role="right"
-  content="\"Can two cars get one traveler there in half the time?\"
+  content="\"Can two cars get one traveler there in half the time?\""
   %}
   
   
