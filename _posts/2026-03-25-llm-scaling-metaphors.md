@@ -132,7 +132,7 @@ So again, I learned some prompting lessons, and went back to Gemini Pro with a c
 
 P.S.: The sleep example is my favorite 🤣.
 
-P.S. 2: Also note how it's so confident that each example "works!" Because you know... Everyone knows a cake takes about an hour to bake!!!
+P.S. 2: Also note how it's so confident that each example "works!" Because you know... **Everyone knows a cake takes about an hour to bake**!!!
 
 
 <div class="chat-container">
