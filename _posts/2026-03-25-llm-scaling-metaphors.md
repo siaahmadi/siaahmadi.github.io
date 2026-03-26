@@ -9,13 +9,13 @@ bibliography: 2026-03-23-llm-scaling-metaphors.bib
 ---
 
 
-In 1975, Fred Brooks published his now-famous book on software project management, _The Mythical Man-Month_ {% quote brooks1975mythical %}. Early on in the book, he writes
+In 1975, Fred Brooks published his now-famous book on software project management, *The Mythical Man-Month* {% cite brooks1975mythical %}. Early on in the book, he writes
 
 >When a task cannot be partitioned because of sequential constraints, the application of more effort has no effect on the schedule (Fig. 2.2). The bearing of a child takes nine months, no matter how many women are assigned. Many software tasks have this characteristic because of the sequential nature of debugging.
 
-This is sometimes quoted as "9 women can't make a baby in 1 month" which stresses the point that child-bearing (and by analogy many other inherently sequential tasks, including software projects) cannot be completed faster by assigning more workers to the task.
+This is sometimes quoted as "9 women can't make a baby in 1 month" which stresses the point that child-bearing (and by analogy many other inherently sequential tasks, including some software projects) cannot be completed faster by assigning more workers to the task.
 
-The first time I heard this phrase I thought it effectively conveyed the point in a funny way. When writing [my blog post](/blog/2026/scaling-llm-inference/), I considered using it but I wanted make sure it doesn't come across as dated. After all, it was first written over 50 years ago in 1975. So I asked my partner what she thought of it, and she said that it sounded odd. And that's when I took to AI for help me find a more neutral phrase that shares the Brooks analogy characteristics. I wanted a phrase that's intuitive, drives the main point home (that sequential tasks can't be scaled), and is perhaps a bit humorous. While I can't say I necessarily got the help I needed, I can say I was entertained!
+The first time I heard this phrase I thought it effectively conveyed the point in a funny way. When writing [my recent blog post](/blog/2026/scaling-llm-inference/) on scaling LLM inference, I considered using it but I wanted make sure it doesn't come across as dated. After all, it was first written over 50 years ago in 1975. So I asked my partner what she thought of it, and she said that it sounded odd. And that's when I took to AI for help me find a more neutral phrase that shares the Brooks analogy characteristics. I wanted a phrase that's intuitive, drives the main point home (that sequential tasks can't be scaled), and is perhaps a bit humorous. While I can't say I necessarily got the help I needed, I can say I was entertained!
 
 ## So what did the AIs say?
 
