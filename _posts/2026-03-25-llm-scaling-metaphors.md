@@ -1,5 +1,5 @@
 ---
-layout: distill
+layout: post
 title: Specification gaming? Or LLM abstraction failure modes?
 date: 2026-03-23
 description: My frustrations (and comedic experience) trying to get LLMs to help me find a good linguistic analogy.
@@ -9,7 +9,7 @@ bibliography: 2026-03-23-llm-scaling-metaphors.bib
 ---
 
 
-In 1975, Fred Brooks published his now-famous book on software project management, *The Mythical Man-Month*<d-cite key="brooks1975mythical"></d-cite>. Early on in the book, he writes
+In 1975, Fred Brooks published his now-famous book on software project management, *The Mythical Man-Month*[^1]. Early on in the book, he writes
 
 >When a task cannot be partitioned because of sequential constraints, the application of more effort has no effect on the schedule (Fig. 2.2). The bearing of a child takes nine months, no matter how many women are assigned. Many software tasks have this characteristic because of the sequential nature of debugging.
 
@@ -238,3 +238,5 @@ Would you like me to tweak one of these into a one-sentence \"mic drop\" for you
 Would you like me to try a version that swaps the cars for another common mode of transport, like a flight or a train?"
   %}
 </div>
+
+[^1]: Brooks, Frederick P. (Frederick Phillips). 1975. The Mythical Man-Month : Essays on Software Engineering / Frederick P. Brooks, Jr. Reading, Mass.: Addison-Wesley Pub. Co. 
