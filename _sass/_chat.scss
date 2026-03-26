@@ -60,7 +60,6 @@ $chat-assistant-bg: null    !default;
 }
 
 // ── Bubble ───────────────────────────────────────────────────────────────────
-
 .chat-bubble {
   padding: 8px 14px;
   border-radius: 18px;
@@ -78,13 +77,8 @@ $chat-assistant-bg: null    !default;
 
   // ── Left (assistant) ────────────────────────────────────────────────────
   .chat-left & {
-    @if $chat-assistant-bg {
-      background: $chat-assistant-bg;
-      color: #1c1c1e;
-    } @else {
-      background: var(--global-code-bg-color);
-      color: var(--global-text-color);
-    }
+    background: var(--chat-assistant-bg, var(--global-code-bg-color));
+    color: var(--global-text-color);
     border-bottom-left-radius: 4px;
 
     code {
@@ -95,7 +89,7 @@ $chat-assistant-bg: null    !default;
 
   // ── Right (user) ────────────────────────────────────────────────────────
   .chat-right & {
-    background: $chat-user-bg;
+    background: var(--chat-user-bg, #{$chat-user-bg});
     color: #ffffff;
     border-bottom-right-radius: 4px;
 
