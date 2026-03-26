@@ -9,7 +9,7 @@ bibliography: 2026-03-23-llm-scaling-metaphors.bib
 ---
 
 
-In 1975, Fred Brooks published his now-famous book on software project management, *The Mythical Man-Month* <d-cite key="brooks1975mythical"></d-cite>. Early on in the book, he writes
+In 1975, Fred Brooks published his now-famous book on software project management, *The Mythical Man-Month*<d-cite key="brooks1975mythical"></d-cite>. Early on in the book, he writes
 
 >When a task cannot be partitioned because of sequential constraints, the application of more effort has no effect on the schedule (Fig. 2.2). The bearing of a child takes nine months, no matter how many women are assigned. Many software tasks have this characteristic because of the sequential nature of debugging.
 
