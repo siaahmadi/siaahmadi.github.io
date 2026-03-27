@@ -262,19 +262,19 @@ terser:
 # Jekyll Archives
 # -----------------------------------------------------------------------------
 
-jekyll-archives-v2:
+jekyll-archives:
   posts:
     enabled: [year, tags, categories]
     permalinks:
       year: "/blog/:year/"
-      tags: "/blog/:type/:name/"
-      categories: "/blog/:type/:name/"
+      tags: "/blog/tag/:name/"
+      categories: "/blog/category/:name/"
   books:
     enabled: [year, tags, categories]
     permalinks:
       year: "/books/:year/"
-      tags: "/books/:type/:name/"
-      categories: "/books/:type/:name/"
+      tags: "/books/tag/:name/"
+      categories: "/books/category/:name/"
 
 display_tags: ["math", "transformer"] # these tags will be displayed on the front page of your blog
 display_categories: ["AI", "from-scratch", "research"] # these categories will be displayed on the front page of your blog
