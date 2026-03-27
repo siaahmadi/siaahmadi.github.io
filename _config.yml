@@ -267,10 +267,14 @@ jekyll-archives:
     enabled: [year, tags, categories] # enables year, tag and category archives (remove if you need to disable one of them).
     permalinks:
       year: "/blog/:year/"
-      tags: "/blog/tag/:type/:name/"
-      categories: "/blog/category/:type/:name/"
+      tags: "/blog/:type/:name/"
+      categories: "/blog/:type/:name/"
   books:
     enabled: [year, tags, categories] # enables year, tag and category archives (remove if you need to disable one of them).
+    permalinks:
+          year: "/books/:year/"
+          tags: "/books/:type/:name/"
+          categories: "/books/:type/:name/"
 
 display_tags: ["math", "transformer"] # these tags will be displayed on the front page of your blog
 display_categories: ["AI", "from-scratch", "research"] # these categories will be displayed on the front page of your blog
