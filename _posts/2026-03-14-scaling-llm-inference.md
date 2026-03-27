@@ -3,7 +3,7 @@ layout: distill
 title: Can you get home twice as fast in two cars instead of one? Scaling up autoregressive inference in LLMs
 description: We will explore the Tiered Transformer, a novel architecture that enables scaling up inference in large language models without sacrificing the autoregressive factorization of the output's joint probability distribution.
 tags: ai, optimization, neural-network, llm, systems, transformer
-categories: artificial-intelligence, research
+categories: research, AI
 giscus_comments: false
 date: 2026-03-14
 featured: true

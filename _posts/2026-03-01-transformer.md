@@ -3,7 +3,9 @@ layout: post
 title: The Transformer
 description: Discussions of the Transformer architecture, atlernate visualizations, and reinterpretation as a database.
 tags: ai, optimization, neural-network, equations, transformer
-categories: artificial-intelligence, from-scratch
+categories:
+  - from-scratch
+  - AI
 giscus_comments: false
 date: 2026-03-01
 featured: true
