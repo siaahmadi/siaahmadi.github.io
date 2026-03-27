@@ -3,8 +3,8 @@ layout: post
 title: Specification gaming? Or LLM abstraction failure modes?
 date: 2026-03-23
 description: My frustrations (and comedic experience) trying to get LLMs to help me find a good linguistic analogy.
-tags: llm, failure-mode
-categories: AI
+tags: ai, llm, failure-mode
+categories: artificial-intelligence
 bibliography: 2026-03-23-llm-scaling-metaphors.bib
 ---
 

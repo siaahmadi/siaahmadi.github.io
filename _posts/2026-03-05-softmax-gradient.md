@@ -2,8 +2,8 @@
 layout: distill
 title: The softmax function and its gradient
 description: Detailed derivation of the gradient of softmax
-tags: optimization, neural-network, math
-categories: AI, from-scratch
+tags: ai, optimization, neural-network, math
+categories: artificial-intelligence, from-scratch
 giscus_comments: false
 date: 2026-03-05
 featured: false
