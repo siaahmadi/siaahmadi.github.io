@@ -262,19 +262,19 @@ terser:
 # Jekyll Archives
 # -----------------------------------------------------------------------------
 
-jekyll-archives:
+jekyll-archives-v2:
   posts:
-    enabled: [year, tags, categories] # enables year, tag and category archives (remove if you need to disable one of them).
+    enabled: [year, tags, categories]
     permalinks:
       year: "/blog/:year/"
       tags: "/blog/:type/:name/"
       categories: "/blog/:type/:name/"
   books:
-    enabled: [year, tags, categories] # enables year, tag and category archives (remove if you need to disable one of them).
+    enabled: [year, tags, categories]
     permalinks:
-          year: "/books/:year/"
-          tags: "/books/:type/:name/"
-          categories: "/books/:type/:name/"
+      year: "/books/:year/"
+      tags: "/books/:type/:name/"
+      categories: "/books/:type/:name/"
 
 display_tags: ["math", "transformer"] # these tags will be displayed on the front page of your blog
 display_categories: ["AI", "from-scratch", "research"] # these categories will be displayed on the front page of your blog
