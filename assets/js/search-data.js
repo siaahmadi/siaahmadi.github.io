@@ -88,7 +88,7 @@ ninja.data = [{
         
           title: "The Transformer",
         
-        description: "Discussions of the Transformer architecture, atlernate visualizations, and reinterpretation as a database.",
+        description: "Derivation and discussion of the Transformer architecture, alternate visualizations, and reinterpretation as a database.",
         section: "Posts",
         handler: () => {
           
