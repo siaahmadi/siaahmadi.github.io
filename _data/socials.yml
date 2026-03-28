@@ -1,7 +1,7 @@
 # this file contains the social media links and usernames of the author
 # the socials will be displayed in the order they are defined here
 # for more information, please refer to the documentation of jekyll-socials plugin: https://github.com/george-gca/jekyll-socials
-cv_pdf: /assets/pdf/Resume_SiaAhmadi_2026_03_22.pdf # path to your CV PDF file
+cv_pdf: /assets/pdf/Resume-SiaAhmadi-2026-03-27.pdf # path to your CV PDF file
 email: "[my_first_name].a.[my_last_name]@gmail.com" # your email address
 # inspirehep_id: 1010907 # Inspire HEP author ID
 orcid_id: "0000-0002-1996-2969" # Inspire HEP author ID

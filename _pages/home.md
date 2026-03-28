@@ -27,10 +27,18 @@ latest_posts:
   limit: 3 # leave blank to include all the blog posts
 ---
 
-**THIS SITE IS UNDER CONSTRUCTION.**
+**I'm a computational neuroscientist interested in neural computation and AI, with a focus on learning and planning.** My technical expertise is in causal analysis and machine learning, and I have a track record of owning and driving large-scale, end-to-end projects from initial hypothesis to publication.
 
-I'm a computational neuroscientist broadly interested in neural computation and AI, and in particular, learning and planning. My aim is to understand artificial and biological neural networks through dissecting their analogous functions. I also deconstruct systems to find inefficiencies or shortcomings and propose solutions to address them.
+My core strengths include iterating on complex experimental designs, managing unstructured data, building robust ML pipelines, and communicating rigorous findings to broad audiences, as evidenced by my publications in top-tier interdisciplinary journals.
 
-Currently, I'm looking for a job in industry. I'm primiarily interested in AI Scientist, ML Engineer, or Data Scientist roles. Please visit my publications page. I'm also working on some projects to [understand](/publications/) and [improve](/publications/) AI systems, in particular large language models (LLMs). You can find my [resumé in PDF format](/assets/pdf/Resume_SiaAhmadi_2026_03_22.pdf) or a [its summary as an HTML](/cv).
+My aim is to understand artificial and biological neural networks through dissecting their analogous functions. In AI, this approach is known as Mechanistic Interpretability. Mechanistic Interpretability is rooted in the systems and computational neuroscience techniques that I have spent my career mastering, making my skill set a direct match. I also deconstruct systems to find bottlenecks or shortcomings and architect optimizations to address them.
 
-Please see my [about page](/about/) for more detailed information about my work, or view [my publications](/publications/). My [blog](/blog/) contains posts about some of my main and miscellaneous projects. Any open sourced code I wrote is also available from [the code page](/repositories).
+Currently, I'm looking for a job in industry. I'm primarily interested in AI Scientist, ML Engineer, or Data Scientist roles. I'm also working on some projects to understand and [improve AI systems](/blog/2026/scaling-llm-inference/), in particular large language models (LLMs).
+
+
+Explore My Work:
+
+* Read my [Publications](/publications) and [Blog](/blog/)
+* Review my open-source projects on the [Code Page](/repositories)
+* Download my [Resume (PDF)](/assets/pdf/Resume-SiaAhmadi-2026-03-27.pdf) or view [its summary as an HTML](/cv)
+* Learn more on my [About Page](/about/)
