@@ -66,13 +66,13 @@ toc:
 #     font-size: 16px;
 ---
 
-# THIS POST IS CURRENTLY IN DEVELOPMENT. PLEASE COME BACK SOON!
+<!-- # THIS POST IS CURRENTLY IN DEVELOPMENT. PLEASE COME BACK SOON! -->
 
-Some tasks are inherently sequential. So in case there was any doubt about the question in the title, the answer is no (😅). Even if you were to attempt the ill-advised trick of splitting yourself in half to be placed in two separate cars, you still won't get home twice as fast, unfortunately. Crucially, this does not even depend on splitting yourself in half: if you and your partner were going home from the opera in two separate cars, you won't get home any faster than if you went in the same car.
+To answer the question in the post title---and in case there was any doubt 😅---the answer is no. Even if you were to attempt the ill-advised trick of splitting yourself in half to be placed in two separate cars, you still won't get home twice as fast, unfortunately. Crucially, this does not even depend on splitting yourself in half: if you and your partner were going home from the opera in two separate cars, you won't get home any faster than if you went in the same car.
 
-Obviously, this is a rather facetious way to make a simple point: inherently sequential tasks cannot be completed faster by using additional resources. Large language models generate their responses sequentially, and that means generating a long response can take a bit too long, no matter how many GPUs you throw at the problem.
+Obviously, this is a rather facetious way to make a simple point: inherently sequential tasks cannot be completed faster by using additional resources. Large language model (LLM) response generation suffers from the same limitation. No matter how many GPUs you throw at the problem, generating a sequence of tokens one by one can take longer than you'd like.
 
-This post about how the problem of next-token prediction can be transformed to make it possible to complete a long response faster using more GPUs.
+In this post, I will focus on building a high-level intuition by introducing the architecture using analogies that complement the formal paper rather than just repeating its equations. If you're curious about implementation details, you will want to read the [companion preprint]({% link assets/pdf/Tiered_Transformer.pdf %}).
 
 ## A fun little experiment
 
@@ -93,20 +93,38 @@ Think back to your last piece of writing longer than a single paragraph. Did you
 
 Whether drafting a paper or a blog post, most of us probably don't sit down and produce a linear stream of consciousness from the first word to the last.
 
-In practice, we start by sketching the skeleton, breaking a monolithic thesis into (semi-)independent yet interrelated sections that we can tackle in isolation. We might even do this recursively: sections might dissolve into paragraphs, and paragraphs into sentences, allowing us to build the work semi-independently as the ideas mature.
+In practice, we start by sketching the skeleton, breaking the thesis into (semi-)independent yet interrelated sections that we can tackle in isolation. We might even do this recursively: sections might be split into paragraphs, and paragraphs into sentences, allowing us to build the work semi-independently as the ideas mature.
 
-Among the many benefit of working in this way is that (at least in theory) you could deploy the task of writing each section to a different person. If you're writing a book, you can architect the main story, come up with the general outline of say 10 chapters, and then outsource the task of actually writing the chapters to 10 different ghost writers. In this way, you can actually finish your book 10 times as fast!
+Among the many benefits of working in this way is that (at least in theory) you could deploy the task of writing each section to a different person. If you're writing a book, you can develop the main story, come up with the general outline of say 10 chapters, and then outsource the task of actually writing the chapters to 10 different ghost writers. In this way, you can actually finish your book 10 times as fast, even though you might write your 10 chapter outlines sequentially!
 
-However, this is not how Large language models (LLMs) generate text. They do so in a strictly linear, autoregressive fashion: predicting one token at a time, conditioned only on the sequence that has come before it. This sequential nature means LLMs build the “architecture” and the “style” simultaneously, token by token, without the benefit of a high-level blueprint. While this produces impressively coherent output in many cases, it cannot be distributed among parallel workers.
+LLMs don't operate that way, however. Even when writing a very long response, LLMs produce output strictly linearly, in an autoregressive fashion: predicting one token at a time, conditioned only on the sequence that has come before it. We know that this approach produces impressively high quality, coherent output in many cases. However, it cannot be distributed among parallel workers. And as the capabilities of LLMs depend more and more on *compute-time scaling* as training data get more scarce, it becomes increasingly more important to make it possible to scale token generation.
 
-
-<!-- Now, sometimes a breakthrough in one section forces a refactor of three others, but the core workflow remains the same: a non-linear descent from abstract concepts to concrete words. -->
 
 ## A solution
 
-Now, what if we trained a model that mimics how we write? Specifically, let's train a model to only create a blueprint of the answer by generting tokens that capture the core ideas of only one section of the response.
+Now, what if we had a model that mimics how we write? The Tiered Transformer attempts to do just that. The Tiered Transformer architecture, explicitly separates the task of creating a high-level blueprint from that of generating tokens.
 
-<!-- more details on the model, and how it can be thought of as an autoencoder -->
+Like in the example of using ghostwriters to write individual chapters of a book, the Tiered transformer uses a dedicated module to generate the "chapter" outlines first. We call these individual high-level ideas "concepts."
+
+Think of a concept as a high-dimensional vector that summarizes the core ideas that a sentence, paragraph, or chapter must convey. The "Concept Decoder" module in the Tiered Transformer architecture is tasked with autoregressively generating these concept embeddings. This is what we might do when we begin drafting an email, a paper, or a story.
+
+Once the Concept Decoder is done generating the main ideas, the "Token Decoder" begins translating each high-dimensional concept embedding into tokens. Think of the Token Decoder as the ghost writer. Remember, the concept vectors were already generating in such a way that each is conditioned on the concepts that came before it (the concept decoder generated them autoregressively, just like regular LLMs operate). And that's why we can have multiple independent Token Decoder modules begin working on each concept in parallel. We will just have to wait until all Token Decoder's have finished generating their portion of the larger response.
+
+
+<div class="row mt-3">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="tiered_transformer_v1.gif" class="img-fluid z-depth-1" %}
+    </div>
+</div>
+<div class="caption">
+    The Tiered Transformer at work. The top row shows the Concept Decoder, and the bottom matrix shows the Token decoder. The gold circles represent the high-level concepts and the green ones the individual tokens. Scaling is possible because each concept's tokens depend on the previous tokens of *only that concept* and the previous high-level concepts (and *not their tokens*).
+</div>
+
+
+
+Now, notice that both steps of this procedure retain the autoregressive factorization: the Concept Decoder works autoregressively, and each Token Decoder also works autoregressively. This means that we can expect the Tiered Transformer to learn an exact distribution over the joint distribution of concepts and of tokens. This is an important property to preserve since previous work on parallelizing token generation in language models has shown that if tokens are generated using a conditional independence assumption, the output quality suffers.
+
+If you squint a little, you might notice that this modular structure bears some resemblances to an autoencoder. In a traditional autoencoder, you map the input to some latent space and then unto this operation by mapping the latent space representations back to the original input space. The high-dimensional concept vector essentially acts as the informational bottleneck in the Tiered Transformer. The Token Decoder then steps into the role of the traditional decoder, unpacking this high-dimensional blueprint into a sequence of discrete tokens. The crucial difference, of course, is that we aren't compressing an existing sequence; our Concept Decoder is generating the bottleneck itself autoregressively from scratch, which is exactly how we preserve that all-important joint probability distribution.
 
 ### Here's an example:
 
@@ -153,3 +171,36 @@ And finally, here's how it expanded them back to full paragraphs:
 This is obviously not as high-quality as the actual paper's introduction. For example, it does not even mention "phase precession" explicitly, and its vague description of it is not even accurate (e.g., "with each cell advancing toward earlier phases" -> the cells don't advance, it's their spike timing relative to theta oscillations that advances). And more importantly, it doesn't hit the main points that the paper is about to satisfactorily set up the scientific gap and our contributions.
 
 Now, despite those caveats, this illustrates a main point: that the *core ideas* and *actual tokens* are somewhat separable (this is not necessarily my idea and there are serious people talking about this all the time, e.g., <d-cite key="fedorenko2024language"></d-cite>).
+
+## From Outline to Architecture
+
+So how do we generate the concepts? As a first-pass attempt, I used a pre-trained BERT model to extract feature representations. The Tiered Transformer is trained on BERT's [CLS] vectors. Because BERT is a bidirectional encoder, its [CLS] token effectively serves as a "summary" of the entire input sequence (or each sentence, or paragraph; that's a design choice). The Tiered Transformer is trained to predict these [CLS] vectors, effectively learning to generate the "outline" or "concept" of the text before parallelizing the token generation. The choice of BERT is not crucial here, which can be seen simply as a preprocessor. 
+
+## Isn't this just an encoder-decoder transformer?
+
+At first glance, this two-stage setup might look suspiciously like a standard encoder-decoder architecture, such as T5 or BART. In translation tasks, an encoder takes in the source text to generate the KV inputs to the cross-attention layer in the decoder. This KV input is what provides the right summary of the "context" (i.e., original text) which the decoder must utilize to generate the translation.
+
+In our case, the Concept Decoder plays a similar role to that encoder, but with a critical distinction: it is strictly autoregressive with causal token masking. This allows the model to maintain the exact joint probability distribution of the sequence. Furthermore, instead of generating a single output to be used as the input to the K and V matrices of the decoder's cross-attention, it actually generates multiple embeddings that each depend on their respective predecessors.
+
+In ongoing work, I am exploring an alternative design whereby the concept decoder generates the token decoder's KV inputs, rather than input embeddings. Stay tuned!
+
+## Throughput gains
+
+When all is said done, the Tiered Transformer was able reach a 72-fold token throughput compared to a single decoder-only architecture. It is worth noting that I observed this scaling with a relatively small proof-of-concept model (around 10 million parameters) so further testing is needed to assess the gains in more realistic settings.
+
+
+<div class="row mt-3">
+    <div class="col-sm mt-3 mt-md-0">
+        {% include figure.liquid loading="eager" path="tiered_transformer_fig3_throughput.png" class="img-fluid z-depth-1" %}
+    </div>
+</div>
+<div class="caption">
+    The Tiered Transformer reaches a peak of 72x throughput gains over a sequential decoder-only transformer. The X-axis denotes the number of sequential forward passes, which scales linearly with the number of tokens generated in a standard autoregressive model.
+</div>
+
+
+I have more results in the preprint so feel free to take a look!
+
+## Conclusion
+
+Scaling autoregressive generation is fundamentally constrained by the sequential nature of one-token-at-a-time decoding. People typically outline high-level concepts before drafting the exact words. By taking inspiration from that, the Tiered Transformer breaks this bottleneck. Separating the generation of latent concepts from the decoding of discrete tokens allows us to parallelize inference without sacrificing learning the joint probability distribution.
