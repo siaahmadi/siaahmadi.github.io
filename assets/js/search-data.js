@@ -32,7 +32,7 @@ ninja.data = [{
           },
         },{id: "nav-code",
           title: "Code",
-          description: "Edit the `_data/repositories.yml` and change the `github_users` and `github_repos` lists to include your own GitHub profile and repositories.",
+          description: "The page contains links to Github repos of the code I have open-sourced.",
           section: "Navigation",
           handler: () => {
             window.location.href = "/repositories/";
@@ -46,7 +46,7 @@ ninja.data = [{
           },
         },{id: "nav-resumé",
           title: "Resumé",
-          description: "Please click on the [link on the right]({% link /assets/pdf/Resume-SiaAhmadi-2026-03-27.pdf %}) to view a PDF version of my resumé which details my accomplishments per role.",
+          description: "Please click on the [link on the right](/assets/pdf/Resume-SiaAhmadi-2026-03-27.pdf) to view a PDF version of my resumé which details my accomplishments per role.",
           section: "Navigation",
           handler: () => {
             window.location.href = "/cv/";
