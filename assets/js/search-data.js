@@ -46,7 +46,7 @@ ninja.data = [{
           },
         },{id: "nav-resumé",
           title: "Resumé",
-          description: "Please click on the [link on the right]({% link /assets/pdf/Resume_SiaAhmadi_2026_03_22.pdf %}) to view a PDF version of my resumé which details my accomplishments per role.",
+          description: "Please click on the [link on the right]({% link /assets/pdf/Resume-SiaAhmadi-2026-03-27.pdf %}) to view a PDF version of my resumé which details my accomplishments per role.",
           section: "Navigation",
           handler: () => {
             window.location.href = "/cv/";
@@ -182,7 +182,7 @@ ninja.data = [{
         title: 'CV',
         section: 'Socials',
         handler: () => {
-          window.open("/assets/pdf/Resume_SiaAhmadi_2026_03_22.pdf", "_blank");
+          window.open("/assets/pdf/Resume-SiaAhmadi-2026-03-27.pdf", "_blank");
         },
       },{
         id: 'social-email',
