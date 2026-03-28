@@ -76,7 +76,7 @@ In this post, I will focus on building a high-level intuition by introducing the
 
 ## A fun little experiment
 
-Before we dive in, I want to share a fun little experiment. I used Google NotebookLM to generate a "podcast" from the companion [preprint]( {% link assets/pdf/Tiered_Transformer.pdf %}). Take a listen:
+Before we dive in, I want to share a fun little experiment. I used Google NotebookLM to generate a "podcast" from an earlier verison of the companion [preprint]( {% link assets/pdf/Tiered_Transformer.pdf %}). Take a listen:
 
 <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
@@ -113,7 +113,7 @@ Once the Concept Decoder is done generating the main ideas, the "Token Decoder" 
 
 <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="tiered_transformer_v1.gif" class="img-fluid z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/tiered_transformer_v1.gif" class="img-fluid z-depth-1" %}
     </div>
 </div>
 <div class="caption">
@@ -191,7 +191,7 @@ When all is said done, the Tiered Transformer was able reach a 72-fold token thr
 
 <div class="row mt-3">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="tiered_transformer_fig3_throughput.png" class="img-fluid z-depth-1" %}
+        {% include figure.liquid loading="eager" path="assets/img/tiered_transformer_fig3_throughput.png" class="img-fluid z-depth-1" %}
     </div>
 </div>
 <div class="caption">
