@@ -40,12 +40,15 @@ bibliography: 2026-03-14-scaling-llm-inference.bib
 #   - we may want to automate TOC generation in the future using
 #     jekyll-toc plugin (https://github.com/toshimaru/jekyll-toc).
 toc:
-  - name: The model
-  - name: Inference
-    subsections:
-      - name: Training
-  - name: Limitations
-  - name: Discussion
+  - name: A fun little experiment
+  - name: Intro
+  - name: A solution
+  - name: Here's an example
+  - name: From Outline to Architecture
+  - name: Isn't this just an encoder-decoder transformer?
+  - name: Throughput gains
+  - name: Conclusion
+
 
 # Below is an example of injecting additional post-specific styles.
 # If you use this post as a template, delete this _styles block.
@@ -126,7 +129,7 @@ Now, notice that both steps of this procedure retain the autoregressive factoriz
 
 If you squint a little, you might notice that this modular structure bears some resemblances to an autoencoder. In a traditional autoencoder, you map the input to some latent space and then unto this operation by mapping the latent space representations back to the original input space. The high-dimensional concept vector essentially acts as the informational bottleneck in the Tiered Transformer. The Token Decoder then steps into the role of the traditional decoder, unpacking this high-dimensional blueprint into a sequence of discrete tokens. The crucial difference, of course, is that we aren't compressing an existing sequence; our Concept Decoder is generating the bottleneck itself autoregressively from scratch, which is exactly how we preserve that all-important joint probability distribution.
 
-### Here's an example:
+### Here's an example
 
 Let's take a look at an example. I want to look at the Introduction of one of my PhD papers, which is [publicly available here](https://doi.org/10.1038/s41467-024-54943-2). I asked [Grok](https://grok.com/) and [Claude](https://claude.ai) to summarize each paragraph, and here's what they wrote (I edited and merged them):
 
