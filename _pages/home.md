@@ -2,15 +2,13 @@
 layout: about
 title: Home
 permalink: /
-subtitle: <a href='www.stanford.edu'>Stanford University</a>. Postdoctoral Researcher. (I usually go by Sia.)
+subtitle: ex-<a href='www.stanford.edu'>Stanford University</a> ML Scientist. (I usually go by Sia.)
 
 profile:
   align: right
   image: profile.jpg
   image_circular: false # crops the image to make it circular
   more_info: >
-    <p>D255</p>
-    <p>299 Campus Dr</p>
     <p>Stanford, CA 94305</p>
 
 selected_papers: true # includes a list of papers marked as "selected={true}"
