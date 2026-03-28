@@ -2,7 +2,7 @@
 layout: page
 permalink: /repositories/
 title: Code
-description: Edit the `_data/repositories.yml` and change the `github_users` and `github_repos` lists to include your own GitHub profile and repositories.
+description: The page contains links to Github repos of the code I have open-sourced.
 nav: true
 nav_order: 5
 ---
