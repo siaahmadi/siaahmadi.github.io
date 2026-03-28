@@ -2,7 +2,7 @@
 layout: about
 title: Home
 permalink: /
-subtitle: ex-<a href='www.stanford.edu'>Stanford University</a> ML Scientist. (I usually go by Sia.)
+subtitle: ex-<a href='www.stanford.edu'>Stanford</a> ML Scientist. (I usually go by Sia.)
 
 profile:
   align: right
