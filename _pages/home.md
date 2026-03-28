@@ -29,7 +29,7 @@ latest_posts:
 
 My core strengths include iterating on complex experimental designs, managing unstructured data, building robust ML pipelines, and communicating rigorous findings to broad audiences, as evidenced by my publications in top-tier interdisciplinary journals.
 
-My aim is to understand artificial and biological neural networks through dissecting their analogous functions. In AI, this approach is known as Mechanistic Interpretability. Mechanistic Interpretability is rooted in the systems and computational neuroscience techniques that I have spent my career mastering, making my skill set a direct match. I also deconstruct systems to find bottlenecks or shortcomings and architect optimizations to address them.
+My aim is to understand artificial and biological neural networks through dissecting their analogous functions. In AI, this approach is known as *Mechanistic Interpretability*. Mechanistic Interpretability is rooted in the systems and computational neuroscience techniques that I have spent my career mastering, making my skill set a direct match. I also deconstruct systems to find bottlenecks or shortcomings and architect optimizations to address them.
 
 Currently, I'm looking for a job in industry. I'm primarily interested in AI Scientist, ML Engineer, or Data Scientist roles. I'm also working on some projects to understand and [improve AI systems](/blog/2026/scaling-llm-inference/), in particular large language models (LLMs).
 
