@@ -50,7 +50,7 @@ toc:
 ---
 
 $$
-\newcommand{\matx}[1]{{\boldsymbol{#1}}}
+\newcommand{\matx}[1]{\boldsymbol{#1}}
 $$
 
 
@@ -85,7 +85,7 @@ def scaled_dot_product_attention(Q, K, V):
 
   s = 1. / torch.sqrt(d)
   S = s * Q @ K.T
-  A = torch.nn.functional.softmax(S)
+  A = torch.nn.functional.softmax(S, dim=-1)
   O = A @ V
 
   return O
