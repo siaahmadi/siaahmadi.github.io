@@ -7,7 +7,8 @@ tags:
   - ai
   - llm
   - failure-mode
-categories: AI
+categories:
+  - AI
 bibliography: 2026-03-23-llm-scaling-metaphors.bib
 ---
 

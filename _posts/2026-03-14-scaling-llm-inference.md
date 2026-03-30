@@ -9,7 +9,9 @@ tags:
   - llm
   - systems
   - transformer
-categories: research, AI
+categories:
+  - research
+  - AI
 giscus_comments: false
 date: 2026-03-14
 featured: true
