@@ -110,7 +110,7 @@ ninja.data = [{
         
           title: "What is FlashAttention?",
         
-        description: "A breakdown of the foundational algorithm for computing scaled dot-product attention efficiently on modern hardware",
+        description: "Easy-to-digest breakdown of the foundational algorithm for computing scaled dot-product attention efficiently on modern hardware",
         section: "Posts",
         handler: () => {
           
