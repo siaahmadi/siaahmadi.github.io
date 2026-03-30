@@ -116,7 +116,6 @@ represents the final vector we'd like to get out. Figure 1 shows this pictoriall
         loading="eager"
         path="assets/img/attention_value_library.png"
         class="img-fluid"
-        <!-- caption="" -->
         %}
     </div>
   <div class="caption">
@@ -129,23 +128,8 @@ represents the final vector we'd like to get out. Figure 1 shows this pictoriall
 
 We can reduce the number of read/writes from and to HBM by performing the end-to-end computation in blocks (what is called "tiling" in the paper). In linear algebra, the elements in the matrix resulting from the product of two input matrices are simply the dot product of the corresponding rows and columns in the inputs. This means the result can be computed in steps, each time focusing only on a small "area" of the output.
 
-## FlashAttention
+But to simplify everything, suppose that the computation shown in Figure 1 was all we wanted to do. Then it should be clear that this can be performed in "chunks" as Figure 2 shows:
 
-At its heart, FlashAttention consists of three separate aspects:
-
-1. The core computation
-2. Normalization factor
-3. Numerical stability
-
-The core computation is what I call matmul-exp-dot-product, which captures the end-to-end computation from multiplying $\matx{Q}$ by $\matx{K}^\top$, exponentiating (softmax numerator), and taking the dot product of the result with the library of value vectors in $\matx{V}$.
-
-The second operation is necessary to ensure proper normalization of the weighted averaging discussed in Figure 1. The third is the familiar idea that we don't want to exponentiate large values in the computation of [the softmax function]({% post_url 2026-03-05-softmax-gradient %}), so we first subtract the largest value from all input elements before exponentiating.
-
-I will strip away (2) and (3) and focus on the matmul-exp-dot-product to show how this is done end-to-end without moving data between HBM and SRAM more than necessary.
-
-### The core computation of attention
-
-TODO: The math
 
 Figure 2 shows how this can be accomplished in end-to-end steps rather sequentially by staging the intermediate computations. This is what FlashAttention does.
 
@@ -173,6 +157,26 @@ Figure 2 shows how this can be accomplished in end-to-end steps rather sequentia
         %}
     </div>
   <div class="caption">
-      **Figure 2**. Final step of the attention mechanism, performed in blocks.
+      **Figure 2**. Final step of the attention mechanism, performed in chunks (or blocks, or tiles).
   </div>
 </div>
+
+
+
+## FlashAttention
+
+At its heart, FlashAttention consists of three separate aspects:
+
+1. The core computation
+2. Normalization factor
+3. Numerical stability
+
+The core computation is what I call matmul-exp-dot-product, which captures the end-to-end computation from multiplying $\matx{Q}$ by $\matx{K}^\top$, exponentiating (softmax numerator), and taking the dot product of the result with the library of value vectors in $\matx{V}$.
+
+The second operation is necessary to ensure proper normalization of the weighted averaging discussed in Figure 1. The third is the familiar idea that we don't want to exponentiate large values in the computation of [the softmax function]({% post_url 2026-03-05-softmax-gradient %}), so we first subtract the largest value from all input elements before exponentiating.
+
+I will strip away (2) and (3) and focus on the matmul-exp-dot-product to show how this is done end-to-end without moving data between HBM and SRAM more than necessary.
+
+### The core computation of attention
+
+TODO: The math
