@@ -49,7 +49,7 @@ toc:
 
 ---
 
-$\newcommand{\matx}[1]{{\bm{#1}}}$
+$\newcommand{\matx}[1]{{\boldsymbol{#1}}}$
 
 I will break down FlashAttention <d-cite key="dao2022flashattention"></d-cite> in simple and easy to digest steps.
 
@@ -75,18 +75,6 @@ My notations $p$ and $r$ for the dimensions of $K$ and $V$ are called `kdim` and
 </aside>
 
 with the following code is problematic:
-
-<d-code block language="python">
-def scaled_dot_product_attention(Q, K, V):
-    d = Q.shape[-1]
-  
-    s = 1. / torch.sqrt(d)
-    S = s * Q @ K.T
-    A = torch.nn.functional.softmax(S)
-    O = A @ V
-
-    return O
-</d-code>
 
 ```python
 def scaled_dot_product_attention(Q, K, V):
