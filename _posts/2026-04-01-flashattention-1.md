@@ -49,9 +49,9 @@ toc:
 
 ---
 
-$\newcommand{\matx}[1]{{\boldsymbol{#1}}}$
+$$\newcommand{\matx}[1]{{\boldsymbol{#1}}}$$
 
-I will break down FlashAttention <d-cite key="dao2022flashattention"></d-cite> in simple and easy to digest steps.
+I will break down FlashAttention<d-cite key="dao2022flashattention"></d-cite> in simple and easy to digest steps.
 
 If you're new to FlashAttention, I think the best way to understand it is to think of the attention mechanism itself backwards. I go into [some detail about attention and how it is analogous to a database]({% post_url 2026-03-01-transformer %}), but I'll review the relevant bits here.
 
@@ -102,13 +102,15 @@ Now, let's step back for a moment to try and understand what the attention mecha
 As discussed in [a previous post]({% post_url 2026-03-01-transformer %}), attention can be interpreted as having the ultimate goal of finding a weighted average of a library of available "values" in $\matx{V}$. For a single query $\matx{Q}_i$, 
 
 
-<div class="row mt-3">
+<div class="row mt-3 mb-5">
     <div class="col-sm mt-3 mt-md-0">
-        {% include figure.liquid loading="eager" path="assets/img/attention_value_library.png" class="img-fluid z-depth-1" %}
+        {% include figure.liquid
+        loading="eager"
+        path="assets/img/attention_value_library.png"
+        class="img-fluid z-depth-1"
+        caption="Attention can be understood as a weighted sum of a library of values (rainbow matrix). This figure shows the final step of attention for a single query. We are making a dish with the ingredients in the values matrix. The weights (left) indicate how much of each ingredient we must take. Mixing up (summing) the ingredients in the correct proportions (attention weights) gives the attention output (right). The attention weights matrix (left) has been transposed to be vertical for a more intuitive visualization."
+        %}
     </div>
-</div>
-<div class="caption">
-    Attention can be understood as a weighted sum of a library of values (rainbow matrix). This figure shows the final step of attention for a single query. We are making a dish with the ingredients in the values matrix. The weights (left) indicate how much of each ingredient we must take. Mixing up (summing) the ingredients in the correct proportions (attention weights) gives the attention output (right). The attention weights matrix (left) has been transposed to be vertical for a more intuitive visualization.
 </div>
 
 <!-- 
