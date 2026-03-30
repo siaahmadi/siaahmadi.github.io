@@ -1,7 +1,7 @@
 ---
 layout: distill
 title: What is FlashAttention?
-description: A breakdown of the foundational algorithm for computing scaled dot-product attention efficiently on modern hardware
+description: Easy-to-digest breakdown of the foundational algorithm for computing scaled dot-product attention efficiently on modern hardware
 tags:
   - systems
   - optimization
@@ -54,9 +54,7 @@ $$
 $$
 
 
-I will break down FlashAttention<d-cite key="dao2022flashattention"></d-cite> in simple and easy to digest steps.
-
-If you're new to FlashAttention, I think the best way to understand it is to think of the attention mechanism itself backwards. I go into [some detail about attention and how it is analogous to a database]({% post_url 2026-03-01-transformer %}), but I'll review the relevant bits here.
+If you're new to FlashAttention<d-cite key="dao2022flashattention"></d-cite>, I think the best way to understand it is to think of the attention mechanism itself backwards. I go into [some detail about attention and how it is analogous to a database]({% post_url 2026-03-01-transformer %}), but I'll review the relevant bits here.
 
 
 
@@ -102,8 +100,15 @@ Regarding (b), the backward pass does require intermediate computations, but Fla
 
 Now, let's step back for a moment to try and understand what the attention mechanism is trying to do in the first place. Then, we can think about how to break down this computation into small chunks that fit in SRAM, so that the entire end-to-end computation can be done when the data is in SRAM.
 
-As discussed in [a previous post]({% post_url 2026-03-01-transformer %}), attention can be interpreted as having the ultimate goal of finding a weighted average of a library of available "values" in $\matx{V}$. For a single query $\matx{Q}_i$, 
+As discussed in [a previous post]({% post_url 2026-03-01-transformer %}), attention can be interpreted as having the ultimate goal of finding a weighted average of a library of available "values" in $\matx{V}$. Considering the attention weights $\matx{A}_i$ resulting from a single query $\matx{Q}_i$
 
+$$
+\begin{align*}
+  \matx{O}_i = \matx{A}_iV = \sum_k \matx{A}_ik\matx{V}_k
+\end{align*}
+$$
+
+represents the final vector we'd like to get out. Figure 1 shows this pictorially.
 
 <div class="row mt-3">
     <div class="col-sm z-depth-1 p-3">
@@ -111,17 +116,14 @@ As discussed in [a previous post]({% post_url 2026-03-01-transformer %}), attent
         loading="eager"
         path="assets/img/attention_value_library.png"
         class="img-fluid"
-        caption="Attention can be understood as a weighted sum of a library of values (rainbow matrix). This figure shows the final step of attention for a single query. We are making a dish with the ingredients in the values matrix. The weights (left) indicate how much of each ingredient we must take. Mixing up (summing) the ingredients in the correct proportions (attention weights) gives the attention output (right). The attention weights matrix (left) has been transposed to be vertical for a more intuitive visualization."
+        <!-- caption="" -->
         %}
     </div>
+  <div class="caption">
+      **Figure 1**. Attention can be understood as a weighted sum of a library of values (rainbow matrix). This figure shows the final step of attention for a single query. We are making a dish with the ingredients in the values matrix. The weights (left) indicate how much of each ingredient we must take. Mixing up (summing) the ingredients in the correct proportions (attention weights) gives the attention output (right). In this figure, I have transposed the attention weights matrix (left) into a column for a more intuitive visualization.
+  </div>
 </div>
 
-<!-- 
-$$
-\begin{align*}
-
-\end{align*}
-$$ -->
 
 ## How do we do this faster?
 
@@ -129,3 +131,48 @@ We can reduce the number of read/writes from and to HBM by performing the end-to
 
 ## FlashAttention
 
+At its heart, FlashAttention consists of three separate aspects:
+
+1. The core computation
+2. Normalization factor
+3. Numerical stability
+
+The core computation is what I call matmul-exp-dot-product, which captures the end-to-end computation from multiplying $\matx{Q}$ by $\matx{K}^\top$, exponentiating (softmax numerator), and taking the dot product of the result with the library of value vectors in $\matx{V}$.
+
+The second operation is necessary to ensure proper normalization of the weighted averaging discussed in Figure 1. The third is the familiar idea that we don't want to exponentiate large values in the computation of [the softmax function]({% post_url 2026-03-05-softmax-gradient %}), so we first subtract the largest value from all input elements before exponentiating.
+
+I will strip away (2) and (3) and focus on the matmul-exp-dot-product to show how this is done end-to-end without moving data between HBM and SRAM more than necessary.
+
+### The core computation of attention
+
+TODO: The math
+
+Figure 2 shows how this can be accomplished in end-to-end steps rather sequentially by staging the intermediate computations. This is what FlashAttention does.
+
+
+<div class="row mt-3">
+    <div class="col-sm z-depth-1 p-3">
+        {% include figure.liquid
+        loading="eager"
+        path="assets/img/flashattention-dot-product-step-1.png"
+        class="img-fluid"
+        %}
+    </div>
+    <div class="col-sm z-depth-1 p-3">
+        {% include figure.liquid
+        loading="eager"
+        path="assets/img/flashattention-dot-product-step-2.png"
+        class="img-fluid"
+        %}
+    </div>
+    <div class="col-sm z-depth-1 p-3">
+        {% include figure.liquid
+        loading="eager"
+        path="assets/img/flashattention-dot-product-step-3.png"
+        class="img-fluid"
+        %}
+    </div>
+  <div class="caption">
+      **Figure 2**. Final step of the attention mechanism, performed in blocks.
+  </div>
+</div>
