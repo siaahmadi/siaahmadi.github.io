@@ -77,16 +77,15 @@ My notations $p$ and $r$ for the dimensions of $K$ and $V$ are called `kdim` and
 with the following code is problematic:
 
 <d-code block language="python">
+def scaled_dot_product_attention(Q, K, V):
+    d = Q.shape[-1]
+  
+    s = 1. / torch.sqrt(d)
+    S = s * Q @ K.T
+    A = torch.nn.functional.softmax(S)
+    O = A @ V
 
-    def scaled_dot_product_attention(Q, K, V):
-      d = Q.shape[-1]
-      
-      s = 1. / torch.sqrt(d)
-      S = s * Q @ K.T
-      A = torch.nn.functional.softmax(S)
-      O = A @ V
-
-      return O
+    return O
 </d-code>
 
 ```python
