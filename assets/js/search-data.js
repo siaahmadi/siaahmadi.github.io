@@ -106,6 +106,17 @@ ninja.data = [{
             window.location.href = "/blog/2026/mlp/";
           
         },
+      },{id: "post-what-is-flashattention",
+        
+          title: "What is FlashAttention?",
+        
+        description: "A breakdown of the foundational algorithm for computing scaled dot-product attention efficiently on modern hardware",
+        section: "Posts",
+        handler: () => {
+          
+            window.location.href = "/blog/2025/flashattention-1/";
+          
+        },
       },{id: "books-the-godfather",
           title: 'The Godfather',
           description: "",
