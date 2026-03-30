@@ -112,15 +112,18 @@ represents the final vector we'd like to get out. Figure 1 shows this pictoriall
 
 <div class="row mt-3">
     <div class="col-sm z-depth-1 p-3">
-        {% include figure.liquid
-        loading="eager"
-        path="assets/img/attention_value_library.png"
-        class="img-fluid"
-        %}
+        <figure class="text-center mb-0">
+          {%
+            include figure.liquid
+            loading="eager"
+            path="assets/img/attention_value_library.png"
+            class="img-fluid"
+          %}
+          <figcaption class="caption mt-3">
+              <b>Figure 1</b>. Attention can be understood as a weighted sum of a library of values (rainbow matrix). This figure shows the final step of attention for a single query. We are making a dish with the ingredients in the values matrix. The weights (left) indicate how much of each ingredient we must take. Mixing up (summing) the ingredients in the correct proportions (attention weights) gives the attention output (right). In this figure, I have transposed the attention weights matrix (left) into a column for a more intuitive visualization.
+          </figcaption>
+        </figure>
     </div>
-  <div class="caption">
-      **Figure 1**. Attention can be understood as a weighted sum of a library of values (rainbow matrix). This figure shows the final step of attention for a single query. We are making a dish with the ingredients in the values matrix. The weights (left) indicate how much of each ingredient we must take. Mixing up (summing) the ingredients in the correct proportions (attention weights) gives the attention output (right). In this figure, I have transposed the attention weights matrix (left) into a column for a more intuitive visualization.
-  </div>
 </div>
 
 
@@ -137,12 +140,14 @@ Figure 2 shows how this can be accomplished in end-to-end steps rather sequentia
 <div class="row mt-3">
     <div class="col-sm z-depth-1 p-3 bg-white">
         <figure class="text-center mb-0">
+            <p class="text-left my-4"> Step 1: </p>
             {% include figure.liquid loading="eager" path="assets/img/flashattention-dot-product-step-1.png" class="img-fluid mb-2" %}
+            <p class="text-left my-4"> Step 2: </p>
             {% include figure.liquid loading="eager" path="assets/img/flashattention-dot-product-step-2.png" class="img-fluid mb-2" %}
+            <p class="text-left my-4"> Step 3: </p>
             {% include figure.liquid loading="eager" path="assets/img/flashattention-dot-product-step-3.png" class="img-fluid" %}
-            
             <figcaption class="caption mt-3">
-                **Figure 2**. Final step of the attention mechanism, performed in chunks (or blocks, or tiles).
+                <b>Figure 2</b>. Final step of the attention mechanism, performed in chunks (or blocks, or tiles).
             </figcaption>
         </figure>
     </div>
