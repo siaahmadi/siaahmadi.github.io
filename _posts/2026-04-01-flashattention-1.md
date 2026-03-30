@@ -135,30 +135,17 @@ Figure 2 shows how this can be accomplished in end-to-end steps rather sequentia
 
 
 <div class="row mt-3">
-    <div class="col-sm z-depth-1 p-3">
-        {% include figure.liquid
-        loading="eager"
-        path="assets/img/flashattention-dot-product-step-1.png"
-        class="img-fluid"
-        %}
+    <div class="col-sm z-depth-1 p-3 bg-white">
+        <figure class="text-center mb-0">
+            {% include figure.liquid loading="eager" path="assets/img/flashattention-dot-product-step-1.png" class="img-fluid mb-2" %}
+            {% include figure.liquid loading="eager" path="assets/img/flashattention-dot-product-step-2.png" class="img-fluid mb-2" %}
+            {% include figure.liquid loading="eager" path="assets/img/flashattention-dot-product-step-3.png" class="img-fluid" %}
+            
+            <figcaption class="caption mt-3">
+                **Figure 2**. Final step of the attention mechanism, performed in chunks (or blocks, or tiles).
+            </figcaption>
+        </figure>
     </div>
-    <div class="col-sm z-depth-1 p-3">
-        {% include figure.liquid
-        loading="eager"
-        path="assets/img/flashattention-dot-product-step-2.png"
-        class="img-fluid"
-        %}
-    </div>
-    <div class="col-sm z-depth-1 p-3">
-        {% include figure.liquid
-        loading="eager"
-        path="assets/img/flashattention-dot-product-step-3.png"
-        class="img-fluid"
-        %}
-    </div>
-  <div class="caption">
-      **Figure 2**. Final step of the attention mechanism, performed in chunks (or blocks, or tiles).
-  </div>
 </div>
 
 
