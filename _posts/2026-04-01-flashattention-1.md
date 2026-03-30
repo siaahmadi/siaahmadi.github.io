@@ -49,7 +49,7 @@ toc:
 
 ---
 
-$\newcommand\matx[1]{{\bm{#1}}}$
+$\newcommand{\matx}[1]{{\bm{#1}}}$
 
 I will break down FlashAttention <d-cite key="dao2022flashattention"></d-cite> in simple and easy to digest steps.
 
