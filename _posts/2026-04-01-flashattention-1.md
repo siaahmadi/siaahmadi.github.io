@@ -11,7 +11,7 @@ categories:
   - from-scratch
   - AI
 giscus_comments: true
-date: 2026-04-01
+date: 2025-04-01
 featured: true
 mermaid:
   enabled: true
