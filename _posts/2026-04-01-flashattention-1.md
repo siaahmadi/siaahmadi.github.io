@@ -121,7 +121,7 @@ As discussed in [a previous post]({% post_url 2026-03-01-transformer %}), attent
     </div>
 </div>
 <div class="caption">
-    Attention can be interpreted as a weighted sum of a library of values (rainbow matrix). This figure shows the final step of attention for a single query. We are making a dish with the ingredients in the values matrix. The weights (left) indicate how much of each ingredient we must take. Mixing up (summing) the ingredients in the correct proportions (attention weights) gives the attention output (right). The attention weights matrix (left) has been transposed to be vertical for a more intuitive visualization.
+    Attention can be understood as a weighted sum of a library of values (rainbow matrix). This figure shows the final step of attention for a single query. We are making a dish with the ingredients in the values matrix. The weights (left) indicate how much of each ingredient we must take. Mixing up (summing) the ingredients in the correct proportions (attention weights) gives the attention output (right). The attention weights matrix (left) has been transposed to be vertical for a more intuitive visualization.
 </div>
 
 <!-- 
@@ -132,4 +132,8 @@ $$
 $$ -->
 
 ## How do we do this faster?
+
+We can reduce the number of read/writes from and to HBM by performing the end-to-end computation in blocks (what is called "tiling" in the paper). In linear algebra, the elements in the matrix resulting from the product of two input matrices are simply the dot product of the corresponding rows and columns in the inputs. This means the result can be computed in steps, each time focusing only on a small "area" of the output.
+
+## FlashAttention
 
