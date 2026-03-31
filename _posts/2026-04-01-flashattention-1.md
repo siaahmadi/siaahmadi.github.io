@@ -174,20 +174,23 @@ I will strip away (2) and (3) and focus on the matmul-exp-dot-product to show ho
 Consider the $i$-th row of the query matrix, $\matx{Q}_i$. The attention output for this query is
 
 $$
-
 \begin{align}
+  \matx{O}_i =
   \begin{bmatrix}
-    \displaystyle\sum_{k=1}^p\frac{\exp(\matx{Q}_i\matx{K}_1^\top)}{\ell}\matx{V}_{k1} &
-    \displaystyle\sum_{k=1}^p\frac{\exp(\matx{Q}_i\matx{K}_2^\top)}{\ell}\matx{V}_{k2} &
+    \displaystyle\sum_{k=1}^p\frac{\exp(\matx{Q}_i\matx{K}_1^\top)}{\ell_i}\matx{V}_{k1} &
+    \displaystyle\sum_{k=1}^p\frac{\exp(\matx{Q}_i\matx{K}_2^\top)}{\ell_i}\matx{V}_{k2} &
     \cdots &
-    \displaystyle\sum_{k=1}^p\frac{\exp(\matx{Q}_i\matx{K}_p^\top)}{\ell}\matx{V}_{kr}
+    \displaystyle\sum_{k=1}^p\frac{\exp(\matx{Q}_i\matx{K}_p^\top)}{\ell_i}\matx{V}_{kr}
   \end{bmatrix}
-  % \\
+\end{align}
+$$
+
+  <!-- % \\
   % \begin{bmatrix}
-  %   \displaystyle\frac{\exp(\matx{Q}_i\matx{K}_1^\top)}{\ell} &
-  %   \displaystyle\frac{\exp(\matx{Q}_i\matx{K}_2^\top)}{\ell} &
+  %   \displaystyle\frac{\exp(\matx{Q}_i\matx{K}_1^\top)}{\ell_i} &
+  %   \displaystyle\frac{\exp(\matx{Q}_i\matx{K}_2^\top)}{\ell_i} &
   %   \cdots &
-  %   \displaystyle\frac{\exp(\matx{Q}_i\matx{K}_p^\top)}{\ell}
+  %   \displaystyle\frac{\exp(\matx{Q}_i\matx{K}_p^\top)}{\ell_i}
   % \end{bmatrix}\matx{V}
   % \\
   % \begin{bmatrix}
@@ -200,20 +203,19 @@ $$
   % \matx{Q}_i
   % \begin{bmatrix}
   %   \matx{K}_1^\top & \matx{K}_2^\top & \cdots & \matx{K}_p^\top
-  % \end{bmatrix}
-\end{align}
-$$
+  % \end{bmatrix} -->
 
 where
 
 $$
-\ell = \sum_{k=1}^p\exp(\matx{Q}_i\matx{K}_k^\top).
+\ell_i = \sum_{k=1}^p\exp(\matx{Q}_i\matx{K}_k^\top).
 $$
 
-Ignoring the denominator $\ell$ for a moment, we'll have the following barebones equation
+Ignoring the denominator $\ell_i$ (aspect (2) in the above list) for a moment, we'll have the following barebones equation
 
 $$
-\begin{align} \label{eq:barebones}
+\begin{align} %\label{eq:barebones}
+  \tilde{\matx{O}}_i =
   \begin{bmatrix}
     \displaystyle\sum_{k=1}^p\exp(\matx{Q}_i\matx{K}_1^\top)\matx{V}_{k1} &
     \displaystyle\sum_{k=1}^p\exp(\matx{Q}_i\matx{K}_2^\top)\matx{V}_{k2} &
@@ -223,13 +225,43 @@ $$
 \end{align}
 $$
 
-and now it is clear that this equation can be calculated for any $j<p$ iteratively (meaning we don't have to have all the values for $k\geq j$ ready in one go). Figure 2 illustrated exactly this.
+and now it is clear that this equation can be calculated for any $k\leq p$ iteratively (meaning we don't have to have any of the values for $j\neq k$ ready yet). Figure 2 illustrated the dot product step of this equation.
 
-> ##### Key Point
+The matmul-exp-dot-product operation I mentioned earlier should be clearly identifiable now: the "matmul" is the product inside the exponential, the "exp" is the exponential, and the "dot-product" is the sum over the products with columns of $\matx{V}$. Figure 3 shows the matmul-exp step.
+
+
+<div class="row mt-3">
+    <div class="col-sm z-depth-1 p-3 bg-white">
+        <figure class="text-center mb-0">
+            {% include figure.liquid loading="eager" path="assets/img/flashattention-matmulexp.png" class="img-fluid mb-2" %}
+            <figcaption class="caption mt-3">
+                <b>Figure 3</b>. Matmul-exp operations in the barebones attention \eqref{eq:barebones}.
+            </figcaption>
+        </figure>
+    </div>
+</div>
+
+
+
+> ##### KEY POINT
 >
-> At its core, FlashAttention iteratively computes the calculations in Eq. ($\eqref{eq:barebones}$) by selecting a block of rows from $\matx{K}$ and $\matx{V}$ (say from row $m$ to row $n$).
+> At its core, **FlashAttention** iteratively computes Eq. $\eqref{eq:barebones}$ by selecting a block of rows from $\matx{K}$ and $\matx{V}$ (say from row $n_1$ to row $n_2$).
 {: .block-tip }
 
-Figure 3 shows this graphically.
+> ##### Tip
+>
+> test tip block.
+{: .block-tip }
 
+Figure 4 below shows this graphically.
 
+<div class="row mt-3">
+    <div class="col-sm z-depth-1 p-3 bg-white">
+        <figure class="text-center mb-0">
+            {% include figure.liquid loading="eager" path="assets/img/flashattention-barebones.png" class="img-fluid mb-2" %}
+            <figcaption class="caption mt-3">
+                <b>Figure 4</b>. End-to-end computation of barebones matmul-exp-dot-product attention \eqref{eq:barebones}. The computation is iterative, so the computation accumulates, which is evident in the penultimate step (notice the already-computed grayed out values). Note that because we are ignoring the normalization factor (Aspect 2 of FlashAttention), the final vector is "fatter" than what it should be (for comparison, Figure 1 performs the normalization).
+            </figcaption>
+        </figure>
+    </div>
+</div>
