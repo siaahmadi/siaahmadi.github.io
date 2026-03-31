@@ -54,6 +54,7 @@ $$
 $$
 
 
+
 If you're new to FlashAttention<d-cite key="dao2022flashattention"></d-cite>, I think the best way to understand it is to think of the attention mechanism itself backwards. I go into [some detail about attention and how it is analogous to a database]({% post_url 2026-03-01-transformer %}), but I'll review the relevant bits here.
 
 
@@ -72,7 +73,7 @@ s & = d^{-\frac{1}{2}}\\
 \end{align*}
 $$
 <aside>
-My notations $p$ and $r$ for the dimensions of $K$ and $V$ are called `kdim` and `vdim` in PyTorch, respectively. My $d$ is called $d_\text{model}$ in the "Attention is all you need" paper and `d_model` in PyTorch.
+My notations $p$ and $r$ for the dimensions of $K$ and $V$ are called `kdim` and `vdim` in PyTorch, respectively. My $d$ is called $d_\text{model}$ in the "Attention is all you need" paper and `d_model` in PyTorch. For multihead attention, $d = d_\text{model} / h$ where $h$ is the number of attention heads.
 </aside>
 
 with the following code is problematic:
@@ -91,7 +92,7 @@ def scaled_dot_product_attention(Q, K, V):
 
 And the reason for that is simply because of hardware considerations. Trying to run this code on GPU will read and write matrices from and to the GPU main memory (called high-bandwith memory, or HBM), per each line of the code. Why? Because processors are too fast for the HBM memory and need a memory with a faster interface. This is called SRAM, which where the matrices go to be processed before being placed back on HBM. The catch is that SRAM is much smaller than HBM so there is no way around this dilemma. We must deal with this back and forth somehow.
 
-This wouldn't be an issue if this was a fundamental limitation with no way around it (we'd just have to accept that bottleneck). However, linear algebra is extremely kind to us and (a) the processor doesn't have to have an entire copy of the matrices to do this, and (b) the computation doesn't need to be completed in steps, as suggested by the formulas.
+This wouldn't be an issue if this was a fundamental limitation with no way around it (we'd just have to accept that bottleneck). However, linear algebra is extremely kind to us and (a) the processor doesn't have to have an entire copy of the matrices to do this, and (b) the computation doesn't need to be completed in staged steps, as suggested by the formulas.
 <aside>
 Regarding (b), the backward pass does require intermediate computations, but FlashAttention simply recomputes the necessary values when the right inputs are in SRAM. This wastes compute but the time it takes to do this is significantly shorter than the time to transfer data between HBM and SRAM so it's a price worth paying.
 </aside>
@@ -100,11 +101,11 @@ Regarding (b), the backward pass does require intermediate computations, but Fla
 
 Now, let's step back for a moment to try and understand what the attention mechanism is trying to do in the first place. Then, we can think about how to break down this computation into small chunks that fit in SRAM, so that the entire end-to-end computation can be done when the data is in SRAM.
 
-As discussed in [a previous post]({% post_url 2026-03-01-transformer %}), attention can be interpreted as having the ultimate goal of finding a weighted average of a library of available "values" in $\matx{V}$. Considering the attention weights $\matx{A}_i$ resulting from a single query $\matx{Q}_i$
+As discussed in [a previous post]({% post_url 2026-03-01-transformer %}), attention can be interpreted as having the ultimate goal of finding a weighted average of a library of available "values" in $\matx{V}$. Considering the attention weights $\matx{A}_i$ resulting from a single query $\matx{Q}_i$ ($i$ indexes the rows here),
 
 $$
 \begin{align*}
-  \matx{O}_i = \matx{A}_iV = \sum_k \matx{A}_ik\matx{V}_k
+  \matx{O}_i = \matx{A}_i\matx{V} = \sum_k \matx{A}_{ik}\matx{V}_k
 \end{align*}
 $$
 
@@ -134,17 +135,16 @@ We can reduce the number of read/writes from and to HBM by performing the end-to
 But to simplify everything, suppose that the computation shown in Figure 1 was all we wanted to do. Then it should be clear that this can be performed in "chunks" as Figure 2 shows:
 
 
-Figure 2 shows how this can be accomplished in end-to-end steps rather sequentially by staging the intermediate computations. This is what FlashAttention does.
 
 
 <div class="row mt-3">
     <div class="col-sm z-depth-1 p-3 bg-white">
         <figure class="text-center mb-0">
-            <p class="text-left my-4"> Step 1: </p>
+            <p class="text-left fw-bold fs-4 my-4"> Chunk 1: </p>
             {% include figure.liquid loading="eager" path="assets/img/flashattention-dot-product-step-1.png" class="img-fluid mb-2" %}
-            <p class="text-left my-4"> Step 2: </p>
+            <p class="text-left fw-bold fs-4 my-4"> Chunk 2: </p>
             {% include figure.liquid loading="eager" path="assets/img/flashattention-dot-product-step-2.png" class="img-fluid mb-2" %}
-            <p class="text-left my-4"> Step 3: </p>
+            <p class="text-left fw-bold fs-4 my-4"> Chunk 3: </p>
             {% include figure.liquid loading="eager" path="assets/img/flashattention-dot-product-step-3.png" class="img-fluid" %}
             <figcaption class="caption mt-3">
                 <b>Figure 2</b>. Final step of the attention mechanism, performed in chunks (or blocks, or tiles).
@@ -171,4 +171,65 @@ I will strip away (2) and (3) and focus on the matmul-exp-dot-product to show ho
 
 ### The core computation of attention
 
-TODO: The math
+Consider the $i$-th row of the query matrix, $\matx{Q}_i$. The attention output for this query is
+
+$$
+
+\begin{align}
+  \begin{bmatrix}
+    \displaystyle\sum_{k=1}^p\frac{\exp(\matx{Q}_i\matx{K}_1^\top)}{\ell}\matx{V}_{k1} &
+    \displaystyle\sum_{k=1}^p\frac{\exp(\matx{Q}_i\matx{K}_2^\top)}{\ell}\matx{V}_{k2} &
+    \cdots &
+    \displaystyle\sum_{k=1}^p\frac{\exp(\matx{Q}_i\matx{K}_p^\top)}{\ell}\matx{V}_{kr}
+  \end{bmatrix}
+  % \\
+  % \begin{bmatrix}
+  %   \displaystyle\frac{\exp(\matx{Q}_i\matx{K}_1^\top)}{\ell} &
+  %   \displaystyle\frac{\exp(\matx{Q}_i\matx{K}_2^\top)}{\ell} &
+  %   \cdots &
+  %   \displaystyle\frac{\exp(\matx{Q}_i\matx{K}_p^\top)}{\ell}
+  % \end{bmatrix}\matx{V}
+  % \\
+  % \begin{bmatrix}
+  %   \matx{Q}_i\matx{K}_1^\top &
+  %   \matx{Q}_i\matx{K}_2^\top &
+  %   \cdots &
+  %   \matx{Q}_i\matx{K}_p^\top
+  % \end{bmatrix}
+  % \\
+  % \matx{Q}_i
+  % \begin{bmatrix}
+  %   \matx{K}_1^\top & \matx{K}_2^\top & \cdots & \matx{K}_p^\top
+  % \end{bmatrix}
+\end{align}
+$$
+
+where
+
+$$
+\ell = \sum_{k=1}^p\exp(\matx{Q}_i\matx{K}_k^\top).
+$$
+
+Ignoring the denominator $\ell$ for a moment, we'll have the following barebones equation
+
+$$
+\begin{align} \label{eq:barebones}
+  \begin{bmatrix}
+    \displaystyle\sum_{k=1}^p\exp(\matx{Q}_i\matx{K}_1^\top)\matx{V}_{k1} &
+    \displaystyle\sum_{k=1}^p\exp(\matx{Q}_i\matx{K}_2^\top)\matx{V}_{k2} &
+    \cdots &
+    \displaystyle\sum_{k=1}^p\exp(\matx{Q}_i\matx{K}_p^\top)\matx{V}_{kr}
+  \end{bmatrix}
+\end{align}
+$$
+
+and now it is clear that this equation can be calculated for any $j<p$ iteratively (meaning we don't have to have all the values for $k\geq j$ ready in one go). Figure 2 illustrated exactly this.
+
+> ##### Key Point
+>
+> At its core, FlashAttention iteratively computes the calculations in Eq. ($\eqref{eq:barebones}$) by selecting a block of rows from $\matx{K}$ and $\matx{V}$ (say from row $m$ to row $n$).
+{: .block-tip }
+
+Figure 3 shows this graphically.
+
+
