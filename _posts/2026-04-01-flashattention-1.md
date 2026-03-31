@@ -163,9 +163,11 @@ At its heart, FlashAttention consists of three separate aspects:
 2. Normalization factor
 3. Numerical stability
 
-The core computation is what I call matmul-exp-dot-product, which captures the end-to-end computation from multiplying $\matx{Q}$ by $\matx{K}^\top$, exponentiating (softmax numerator), and taking the dot product of the result with the library of value vectors in $\matx{V}$.
+The core computation is what I call matmul-exp-dot-product, which captures the end-to-end computation by multiplying $\matx{Q}$ by $\matx{K}^\top$, exponentiating (softmax numerator), and taking the dot product of the result with the library of value vectors in $\matx{V}$.
 
-The second operation is necessary to ensure proper normalization of the weighted averaging discussed in Figure 1. The third is the familiar idea that we don't want to exponentiate large values in the computation of [the softmax function]({% post_url 2026-03-05-softmax-gradient %}), so we first subtract the largest value from all input elements before exponentiating.
+The second operation is necessary to ensure proper normalization of the weighted averaging discussed in Figure 1.
+
+The third is the familiar idea that we don't want to exponentiate large values in the computation of [the softmax function]({% post_url 2026-03-05-softmax-gradient %}), so we first subtract the largest value from all input elements before exponentiating.
 
 I will strip away (2) and (3) and focus on the matmul-exp-dot-product to show how this is done end-to-end without moving data between HBM and SRAM more than necessary.
 
@@ -235,22 +237,17 @@ The matmul-exp-dot-product operation I mentioned earlier should be clearly ident
         <figure class="text-center mb-0">
             {% include figure.liquid loading="eager" path="assets/img/flashattention-matmulexp.png" class="img-fluid mb-2" %}
             <figcaption class="caption mt-3">
-                <b>Figure 3</b>. Matmul-exp operations in the barebones attention \eqref{eq:barebones}.
+                <b>Figure 3</b>. Matmul-exp operations in the barebones attention \eqref{eq:barebones}. We have chosen a block from $K$ (its third and fourth rows) to compute the attention scores for a single query. The "Attention Weights" shows the logical representation of the final result, by indicating the previously computed values (first two) as small circles (in HBM), the values just computed (next two) as pentograms (in SRAM), and yet-uncomputed values (last three) as squares.
             </figcaption>
-        </figure>
+        </figure>{ : #fig-matmulexp }
     </div>
-</div>{ : #fig-matmulexp }
+</div>
 
 
 
 > ##### KEY POINT
 >
 > At its core, **FlashAttention** iteratively computes Eq. $\eqref{eq:barebones}$ by selecting a block of rows from $\matx{K}$ and $\matx{V}$ (say from row $n_1$ to row $n_2$).
-{: .block-tip }
-
-> ##### Tip
->
-> test tip block.
 {: .block-tip }
 
 Figure 4 below shows this graphically.
@@ -260,7 +257,7 @@ Figure 4 below shows this graphically.
         <figure class="text-center mb-0">
             {% include figure.liquid loading="eager" path="assets/img/flashattention-barebones.png" class="img-fluid mb-2" %}
             <figcaption class="caption mt-3">
-                <b>Figure 4</b>. End-to-end computation of barebones matmul-exp-dot-product attention \eqref{eq:barebones}. The computation is iterative, so the values accumulate, which is evident in the penultimate step (notice the already-computed grayed out values). Note that because we are ignoring the normalization factor (Aspect 2 of FlashAttention), the final vector is "fatter" than it should be (for comparison, Figure 2 performs the normalization).
+                <b>Figure 4</b>. End-to-end computation of barebones matmul-exp-dot-product attention \eqref{eq:barebones}. The computation is iterative, so the values accumulate, which is evident in the penultimate step (notice the already-computed grayed out values which we recall from HBM into SRAM for accumulation). Note that because we are ignoring the normalization factor (Aspect 2 of FlashAttention), the final vector is "fatter" than it should be (for comparison, Figure 2 performs the normalization).
             </figcaption>
         </figure>
     </div>
