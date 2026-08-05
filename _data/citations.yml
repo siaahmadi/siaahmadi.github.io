@@ -1,5 +1,5 @@
 metadata:
-  last_updated: '2026-08-03'
+  last_updated: '2026-08-05'
 papers:
   WDusSbUAAAAJ:9yKSN-GCB0IC:
     citations: 80
@@ -14,6 +14,6 @@ papers:
     title: Neural computations for behaviorally relevant information storage and retrieval from seconds to hours
     year: '2020'
   WDusSbUAAAAJ:u5HHmVD_uO8C:
-    citations: 172
+    citations: 173
     title: Dentate network activity is necessary for spatial working memory by supporting CA3 sharp-wave ripple generation and prospective firing of CA3 neurons
     year: '2018'
